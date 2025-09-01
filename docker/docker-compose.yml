@@ -67,6 +67,70 @@ services:
       timeout: 10s
       retries: 3
 
+  datasync-manager:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.datasync
+    container_name: iaops-datasync-manager
+    restart: unless-stopped
+    ports:
+      - "${DATASYNC_MANAGER_PORT:-8863}:8863"
+    environment:
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    networks:
+      - dev-core-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8863/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  github-runner-manager:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.github-runner
+    container_name: iaops-github-runner-manager
+    restart: unless-stopped
+    ports:
+      - "${GITHUB_RUNNER_MANAGER_PORT:-8864}:8864"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_REPO=${GITHUB_REPO:-giovanemere/ia-ops}
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    networks:
+      - dev-core-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8864/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  techdocs-builder-manager:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.techdocs
+    container_name: iaops-techdocs-builder-manager
+    restart: unless-stopped
+    ports:
+      - "${TECHDOCS_BUILDER_MANAGER_PORT:-8865}:8865"
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    networks:
+      - dev-core-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8865/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   dev-core-network:
     driver: bridge

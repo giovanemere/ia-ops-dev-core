@@ -36,7 +36,7 @@ sleep 10
 
 # Verify services
 echo -e "${YELLOW}🔍 Verifying services...${NC}"
-services=("8860:Repository Manager" "8861:Task Manager" "8862:Log Manager")
+services=("8860:Repository Manager" "8861:Task Manager" "8862:Log Manager" "8863:DataSync Manager" "8864:GitHub Runner Manager" "8865:TechDocs Builder Manager")
 
 for service in "${services[@]}"; do
     port=$(echo $service | cut -d: -f1)
@@ -53,6 +53,9 @@ echo ""
 echo -e "${GREEN}🎉 Dev Core Services started!${NC}"
 echo ""
 echo -e "${BLUE}📊 Access URLs:${NC}"
-echo -e "   Repository Manager: ${YELLOW}http://localhost:8860${NC}"
-echo -e "   Task Manager:       ${YELLOW}http://localhost:8861${NC}"
-echo -e "   Log Manager:        ${YELLOW}http://localhost:8862${NC}"
+echo -e "   Repository Manager:    ${YELLOW}http://localhost:8860${NC}"
+echo -e "   Task Manager:          ${YELLOW}http://localhost:8861${NC}"
+echo -e "   Log Manager:           ${YELLOW}http://localhost:8862${NC}"
+echo -e "   DataSync Manager:      ${YELLOW}http://localhost:8863${NC}"
+echo -e "   GitHub Runner Manager: ${YELLOW}http://localhost:8864${NC}"
+echo -e "   TechDocs Builder:      ${YELLOW}http://localhost:8865${NC}"
