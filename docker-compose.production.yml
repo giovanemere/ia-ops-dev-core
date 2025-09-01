@@ -144,6 +144,26 @@ services:
       timeout: 10s
       retries: 3
 
+  # Provider Administration API
+  provider-admin:
+    image: edissonz8809/ia-ops-provider-admin:2.0.0
+    container_name: iaops-provider-admin
+    restart: unless-stopped
+    ports:
+      - "${PROVIDER_ADMIN_PORT:-8866}:8866"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5434/iaops}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-encryption-key-here}
+      - PROVIDER_ADMIN_SECRET=${PROVIDER_ADMIN_SECRET:-admin-secret}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8866/api/v1/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   swagger-portal:
     image: edissonz8809/ia-ops-swagger-portal:latest
     container_name: iaops-swagger-portal
