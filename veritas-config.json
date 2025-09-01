@@ -1,0 +1,184 @@
+{
+  "project": "ia-ops-dev-core",
+  "version": "2.0.0",
+  "description": "IA-Ops Dev Core Services Testing Configuration",
+  "swagger_portal": "http://localhost:8870",
+  "services": {
+    "repository-manager": {
+      "name": "Repository Manager",
+      "base_url": "http://localhost:8860",
+      "api_prefix": "/api/v1",
+      "health_endpoint": "/health",
+      "docs_endpoint": "/docs/",
+      "integrations": ["postgresql", "minio"],
+      "priority": 1
+    },
+    "task-manager": {
+      "name": "Task Manager", 
+      "base_url": "http://localhost:8861",
+      "api_prefix": "/api/v1",
+      "health_endpoint": "/health",
+      "docs_endpoint": "/docs/",
+      "integrations": ["postgresql", "redis"],
+      "priority": 2
+    },
+    "log-manager": {
+      "name": "Log Manager",
+      "base_url": "http://localhost:8862",
+      "api_prefix": "/api/v1", 
+      "health_endpoint": "/health",
+      "docs_endpoint": "/docs/",
+      "integrations": ["postgresql"],
+      "priority": 3
+    },
+    "datasync-manager": {
+      "name": "DataSync Manager",
+      "base_url": "http://localhost:8863",
+      "api_prefix": "/api/v1",
+      "health_endpoint": "/health", 
+      "docs_endpoint": "/docs/",
+      "integrations": ["postgresql", "minio"],
+      "priority": 4
+    },
+    "github-runner-manager": {
+      "name": "GitHub Runner Manager",
+      "base_url": "http://localhost:8864",
+      "api_prefix": "/api/v1",
+      "health_endpoint": "/health",
+      "docs_endpoint": "/docs/",
+      "integrations": ["postgresql"],
+      "priority": 5
+    },
+    "techdocs-builder": {
+      "name": "TechDocs Builder",
+      "base_url": "http://localhost:8865", 
+      "api_prefix": "/api/v1",
+      "health_endpoint": "/health",
+      "docs_endpoint": "/docs/",
+      "integrations": ["postgresql"],
+      "priority": 6
+    }
+  },
+  "databases": {
+    "postgresql": {
+      "host": "localhost",
+      "port": 5434,
+      "database": "iaops",
+      "test_query": "SELECT 1"
+    },
+    "redis": {
+      "host": "localhost", 
+      "port": 6380,
+      "test_command": "PING"
+    },
+    "minio": {
+      "endpoint": "localhost:9898",
+      "health_endpoint": "/minio/health/live"
+    }
+  },
+  "test_suites": {
+    "health_checks": {
+      "enabled": true,
+      "timeout": 30000,
+      "required": true,
+      "retry_count": 3
+    },
+    "api_functionality": {
+      "enabled": true,
+      "timeout": 120000,
+      "required": true,
+      "include_crud": true
+    },
+    "integration_tests": {
+      "enabled": true,
+      "timeout": 180000,
+      "required": false,
+      "cross_service": true
+    },
+    "performance_tests": {
+      "enabled": true,
+      "timeout": 300000,
+      "required": false,
+      "concurrent_users": 10,
+      "duration": "2m"
+    },
+    "error_handling": {
+      "enabled": true,
+      "timeout": 60000,
+      "required": false,
+      "test_edge_cases": true
+    }
+  },
+  "test_data": {
+    "repository": {
+      "name": "veritas-test-repo",
+      "url": "https://github.com/test/veritas.git",
+      "branch": "main",
+      "description": "Test repository for Veritas testing"
+    },
+    "task": {
+      "name": "veritas-test-task",
+      "type": "test",
+      "command": "echo 'Veritas test execution'",
+      "environment": {
+        "NODE_ENV": "test",
+        "CI": "true",
+        "VERITAS_TEST": "true"
+      }
+    },
+    "log": {
+      "service": "veritas-testing",
+      "level": "info",
+      "message": "Veritas test log entry",
+      "metadata": {
+        "test_suite": "veritas",
+        "version": "2.0.0"
+      }
+    }
+  },
+  "thresholds": {
+    "response_time": {
+      "health_check": 1000,
+      "api_call": 2000,
+      "integration": 5000
+    },
+    "success_rate": {
+      "minimum": 95,
+      "target": 99
+    },
+    "availability": {
+      "minimum": 99.0,
+      "target": 99.9
+    }
+  },
+  "reporting": {
+    "formats": ["json", "html", "junit"],
+    "include_metrics": true,
+    "include_logs": true,
+    "export_path": "./test-reports",
+    "real_time_updates": true
+  },
+  "alerts": {
+    "service_down": {
+      "enabled": true,
+      "severity": "critical",
+      "notification": "email"
+    },
+    "high_response_time": {
+      "enabled": true,
+      "threshold": 3000,
+      "severity": "warning"
+    },
+    "low_success_rate": {
+      "enabled": true,
+      "threshold": 90,
+      "severity": "critical"
+    }
+  },
+  "monitoring": {
+    "interval": 30000,
+    "metrics_collection": true,
+    "auto_retry": true,
+    "max_retries": 3
+  }
+}
