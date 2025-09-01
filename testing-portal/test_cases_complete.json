@@ -1,0 +1,647 @@
+{
+  "test_suites": {
+    "unit_tests": {
+      "description": "Pruebas unitarias de componentes individuales",
+      "test_cases": [
+        {
+          "id": "UT001",
+          "name": "Repository Manager - Health Check",
+          "description": "Verificar que el health check del Repository Manager responde correctamente",
+          "type": "unit",
+          "service": "repository-manager",
+          "endpoint": "/health",
+          "method": "GET",
+          "expected_response": {
+            "status_code": 200,
+            "body": {
+              "success": true,
+              "data": {
+                "status": "healthy",
+                "service": "Repository Manager"
+              }
+            }
+          },
+          "mock_data": {
+            "database_connection": true,
+            "minio_connection": true
+          },
+          "assertions": [
+            "response.status_code == 200",
+            "response.json()['success'] == True",
+            "response.json()['data']['status'] == 'healthy'"
+          ]
+        },
+        {
+          "id": "UT002",
+          "name": "Repository Manager - Create Repository",
+          "description": "Crear un nuevo repositorio con datos válidos",
+          "type": "unit",
+          "service": "repository-manager",
+          "endpoint": "/api/v1/repositories",
+          "method": "POST",
+          "payload": {
+            "name": "test-repo",
+            "url": "https://github.com/test/repo.git",
+            "branch": "main",
+            "description": "Test repository"
+          },
+          "expected_response": {
+            "status_code": 201,
+            "body": {
+              "success": true,
+              "data": {
+                "id": 1,
+                "name": "test-repo",
+                "status": "active"
+              }
+            }
+          },
+          "mock_data": {
+            "repository_id": 1,
+            "created_at": "2025-09-01T23:00:00Z"
+          }
+        },
+        {
+          "id": "UT003",
+          "name": "Task Manager - Create Task",
+          "description": "Crear una nueva tarea con datos válidos",
+          "type": "unit",
+          "service": "task-manager",
+          "endpoint": "/api/v1/tasks",
+          "method": "POST",
+          "payload": {
+            "name": "test-task",
+            "type": "build",
+            "repository_id": 1,
+            "command": "npm install && npm run build"
+          },
+          "expected_response": {
+            "status_code": 201,
+            "body": {
+              "success": true,
+              "data": {
+                "id": 1,
+                "name": "test-task",
+                "status": "pending"
+              }
+            }
+          },
+          "mock_data": {
+            "task_id": 1,
+            "redis_queue_position": 1
+          }
+        },
+        {
+          "id": "UT004",
+          "name": "Log Manager - Search Logs",
+          "description": "Buscar logs por query específico",
+          "type": "unit",
+          "service": "log-manager",
+          "endpoint": "/api/v1/logs/search",
+          "method": "GET",
+          "query_params": {
+            "q": "error",
+            "limit": 10
+          },
+          "expected_response": {
+            "status_code": 200,
+            "body": {
+              "success": true,
+              "data": []
+            }
+          },
+          "mock_data": {
+            "logs": [
+              {
+                "id": 1,
+                "service": "test-service",
+                "level": "error",
+                "message": "Test error message",
+                "timestamp": "2025-09-01T23:00:00Z"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "integration_tests": {
+      "description": "Pruebas de integración entre servicios",
+      "test_cases": [
+        {
+          "id": "IT001",
+          "name": "Complete Workflow - Repository to Task",
+          "description": "Flujo completo: crear repositorio → crear tarea → ejecutar → obtener logs",
+          "type": "integration",
+          "steps": [
+            {
+              "step": 1,
+              "action": "Create Repository",
+              "service": "repository-manager",
+              "endpoint": "/api/v1/repositories",
+              "method": "POST",
+              "payload": {
+                "name": "integration-test-repo",
+                "url": "https://github.com/test/integration.git",
+                "branch": "main"
+              },
+              "store_response": "repo_id"
+            },
+            {
+              "step": 2,
+              "action": "Create Task",
+              "service": "task-manager",
+              "endpoint": "/api/v1/tasks",
+              "method": "POST",
+              "payload": {
+                "name": "integration-task",
+                "type": "build",
+                "repository_id": "{repo_id}",
+                "command": "echo 'Integration test'"
+              },
+              "store_response": "task_id"
+            },
+            {
+              "step": 3,
+              "action": "Execute Task",
+              "service": "task-manager",
+              "endpoint": "/api/v1/tasks/{task_id}/execute",
+              "method": "POST"
+            },
+            {
+              "step": 4,
+              "action": "Get Task Logs",
+              "service": "task-manager",
+              "endpoint": "/api/v1/tasks/{task_id}/logs",
+              "method": "GET"
+            },
+            {
+              "step": 5,
+              "action": "Create Log Entry",
+              "service": "log-manager",
+              "endpoint": "/api/v1/logs",
+              "method": "POST",
+              "payload": {
+                "service": "integration-test",
+                "level": "info",
+                "message": "Integration test completed successfully"
+              }
+            }
+          ],
+          "expected_outcome": {
+            "repository_created": true,
+            "task_created": true,
+            "task_executed": true,
+            "logs_available": true
+          }
+        },
+        {
+          "id": "IT002",
+          "name": "Database Integration Test",
+          "description": "Verificar integración con PostgreSQL, Redis y MinIO",
+          "type": "integration",
+          "database_tests": [
+            {
+              "database": "postgresql",
+              "test": "Create and retrieve repository",
+              "operations": ["INSERT", "SELECT", "UPDATE", "DELETE"]
+            },
+            {
+              "database": "redis",
+              "test": "Queue and process task",
+              "operations": ["LPUSH", "RPOP", "SET", "GET"]
+            },
+            {
+              "database": "minio",
+              "test": "Store and retrieve file",
+              "operations": ["PUT_OBJECT", "GET_OBJECT", "LIST_OBJECTS"]
+            }
+          ]
+        },
+        {
+          "id": "IT003",
+          "name": "Cross-Service Communication",
+          "description": "Verificar comunicación entre todos los servicios",
+          "type": "integration",
+          "service_matrix": [
+            {
+              "from": "repository-manager",
+              "to": "task-manager",
+              "test": "Repository triggers task creation"
+            },
+            {
+              "from": "task-manager",
+              "to": "log-manager",
+              "test": "Task execution generates logs"
+            },
+            {
+              "from": "datasync-manager",
+              "to": "repository-manager",
+              "test": "Sync job backs up repository"
+            }
+          ]
+        }
+      ]
+    },
+    "performance_tests": {
+      "description": "Pruebas de rendimiento y carga",
+      "test_cases": [
+        {
+          "id": "PT001",
+          "name": "Repository Manager Load Test",
+          "description": "Prueba de carga para el Repository Manager",
+          "type": "performance",
+          "service": "repository-manager",
+          "load_config": {
+            "concurrent_users": 50,
+            "duration": "5m",
+            "ramp_up": "30s",
+            "scenarios": [
+              {
+                "name": "list_repositories",
+                "weight": 70,
+                "endpoint": "/api/v1/repositories",
+                "method": "GET"
+              },
+              {
+                "name": "create_repository",
+                "weight": 30,
+                "endpoint": "/api/v1/repositories",
+                "method": "POST",
+                "payload_template": {
+                  "name": "load-test-{random}",
+                  "url": "https://github.com/test/load-{random}.git",
+                  "branch": "main"
+                }
+              }
+            ]
+          },
+          "thresholds": {
+            "http_req_duration": ["p(95)<500"],
+            "http_req_failed": ["rate<0.1"],
+            "http_reqs": ["rate>10"]
+          },
+          "expected_metrics": {
+            "avg_response_time": "<200ms",
+            "p95_response_time": "<500ms",
+            "error_rate": "<1%",
+            "throughput": ">100 req/s"
+          }
+        },
+        {
+          "id": "PT002",
+          "name": "Task Manager Stress Test",
+          "description": "Prueba de estrés para el Task Manager",
+          "type": "performance",
+          "service": "task-manager",
+          "load_config": {
+            "concurrent_users": 100,
+            "duration": "10m",
+            "scenarios": [
+              {
+                "name": "create_and_execute_tasks",
+                "weight": 100,
+                "steps": [
+                  {
+                    "endpoint": "/api/v1/tasks",
+                    "method": "POST",
+                    "payload": {
+                      "name": "stress-test-{random}",
+                      "type": "test",
+                      "command": "echo 'stress test'"
+                    }
+                  },
+                  {
+                    "endpoint": "/api/v1/tasks/{task_id}/execute",
+                    "method": "POST"
+                  }
+                ]
+              }
+            ]
+          },
+          "thresholds": {
+            "http_req_duration": ["p(95)<1000"],
+            "http_req_failed": ["rate<0.05"]
+          }
+        },
+        {
+          "id": "PT003",
+          "name": "System-wide Performance Test",
+          "description": "Prueba de rendimiento de todo el sistema",
+          "type": "performance",
+          "system_test": true,
+          "load_config": {
+            "concurrent_users": 200,
+            "duration": "15m",
+            "services": [
+              {
+                "service": "repository-manager",
+                "weight": 30,
+                "operations": ["list", "create", "update"]
+              },
+              {
+                "service": "task-manager",
+                "weight": 40,
+                "operations": ["create", "execute", "logs"]
+              },
+              {
+                "service": "log-manager",
+                "weight": 20,
+                "operations": ["search", "create"]
+              },
+              {
+                "service": "datasync-manager",
+                "weight": 10,
+                "operations": ["sync", "backup"]
+              }
+            ]
+          },
+          "system_thresholds": {
+            "cpu_usage": "<80%",
+            "memory_usage": "<85%",
+            "disk_io": "<70%",
+            "network_io": "<60%"
+          }
+        }
+      ]
+    },
+    "error_handling_tests": {
+      "description": "Pruebas de manejo de errores y casos edge",
+      "test_cases": [
+        {
+          "id": "EH001",
+          "name": "Invalid Repository Data",
+          "description": "Crear repositorio con datos inválidos",
+          "type": "error_handling",
+          "service": "repository-manager",
+          "endpoint": "/api/v1/repositories",
+          "method": "POST",
+          "payload": {
+            "name": "",
+            "url": "invalid-url",
+            "branch": ""
+          },
+          "expected_response": {
+            "status_code": 400,
+            "body": {
+              "success": false,
+              "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Invalid repository data"
+              }
+            }
+          }
+        },
+        {
+          "id": "EH002",
+          "name": "Repository Not Found",
+          "description": "Intentar obtener repositorio inexistente",
+          "type": "error_handling",
+          "service": "repository-manager",
+          "endpoint": "/api/v1/repositories/99999",
+          "method": "GET",
+          "expected_response": {
+            "status_code": 404,
+            "body": {
+              "success": false,
+              "error": {
+                "code": "NOT_FOUND",
+                "message": "Repository not found"
+              }
+            }
+          }
+        },
+        {
+          "id": "EH003",
+          "name": "Task Already Running",
+          "description": "Intentar ejecutar tarea que ya está ejecutándose",
+          "type": "error_handling",
+          "service": "task-manager",
+          "endpoint": "/api/v1/tasks/{running_task_id}/execute",
+          "method": "POST",
+          "expected_response": {
+            "status_code": 409,
+            "body": {
+              "success": false,
+              "error": {
+                "code": "TASK_RUNNING",
+                "message": "Task is already running"
+              }
+            }
+          }
+        },
+        {
+          "id": "EH004",
+          "name": "Database Connection Failure",
+          "description": "Simular falla de conexión a base de datos",
+          "type": "error_handling",
+          "service": "all",
+          "mock_failure": {
+            "type": "database_connection",
+            "duration": "30s"
+          },
+          "expected_behavior": {
+            "graceful_degradation": true,
+            "error_messages": true,
+            "retry_mechanism": true
+          }
+        }
+      ]
+    },
+    "security_tests": {
+      "description": "Pruebas de seguridad y validación",
+      "test_cases": [
+        {
+          "id": "ST001",
+          "name": "SQL Injection Test",
+          "description": "Verificar protección contra inyección SQL",
+          "type": "security",
+          "service": "repository-manager",
+          "endpoint": "/api/v1/repositories",
+          "method": "POST",
+          "payload": {
+            "name": "'; DROP TABLE repositories; --",
+            "url": "https://github.com/test/repo.git",
+            "branch": "main"
+          },
+          "expected_response": {
+            "status_code": 400,
+            "body": {
+              "success": false,
+              "error": {
+                "code": "VALIDATION_ERROR"
+              }
+            }
+          }
+        },
+        {
+          "id": "ST002",
+          "name": "XSS Protection Test",
+          "description": "Verificar protección contra XSS",
+          "type": "security",
+          "service": "log-manager",
+          "endpoint": "/api/v1/logs",
+          "method": "POST",
+          "payload": {
+            "service": "test",
+            "level": "info",
+            "message": "<script>alert('xss')</script>"
+          },
+          "expected_response": {
+            "status_code": 400,
+            "sanitized_message": "&lt;script&gt;alert('xss')&lt;/script&gt;"
+          }
+        },
+        {
+          "id": "ST003",
+          "name": "Rate Limiting Test",
+          "description": "Verificar límites de tasa de requests",
+          "type": "security",
+          "service": "all",
+          "test_config": {
+            "requests_per_minute": 1000,
+            "expected_limit": 100
+          },
+          "expected_response": {
+            "status_code": 429,
+            "body": {
+              "error": "Rate limit exceeded"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "mock_services": {
+    "repository_manager_mock": {
+      "port": 18860,
+      "endpoints": {
+        "/health": {
+          "method": "GET",
+          "response": {
+            "success": true,
+            "data": {"status": "healthy", "service": "Repository Manager"}
+          },
+          "delay": "50ms"
+        },
+        "/api/v1/repositories": {
+          "GET": {
+            "response": {
+              "success": true,
+              "data": [
+                {
+                  "id": 1,
+                  "name": "mock-repo-1",
+                  "url": "https://github.com/mock/repo1.git",
+                  "branch": "main",
+                  "status": "active"
+                }
+              ]
+            }
+          },
+          "POST": {
+            "response": {
+              "success": true,
+              "data": {
+                "id": "{auto_increment}",
+                "name": "{request.name}",
+                "url": "{request.url}",
+                "branch": "{request.branch}",
+                "status": "active",
+                "created_at": "{current_timestamp}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "task_manager_mock": {
+      "port": 18861,
+      "endpoints": {
+        "/health": {
+          "method": "GET",
+          "response": {
+            "success": true,
+            "data": {"status": "healthy", "service": "Task Manager"}
+          }
+        },
+        "/api/v1/tasks": {
+          "GET": {
+            "response": {
+              "success": true,
+              "data": []
+            }
+          },
+          "POST": {
+            "response": {
+              "success": true,
+              "data": {
+                "id": "{auto_increment}",
+                "name": "{request.name}",
+                "type": "{request.type}",
+                "status": "pending",
+                "created_at": "{current_timestamp}"
+              }
+            }
+          }
+        },
+        "/api/v1/tasks/{id}/execute": {
+          "POST": {
+            "response": {
+              "success": true,
+              "data": {
+                "id": "{path.id}",
+                "status": "completed",
+                "started_at": "{current_timestamp}",
+                "completed_at": "{current_timestamp + 5s}"
+              }
+            },
+            "delay": "2s"
+          }
+        }
+      }
+    }
+  },
+  "automation_config": {
+    "ci_cd_integration": {
+      "github_actions": {
+        "trigger": "on_push",
+        "test_suites": ["unit_tests", "integration_tests"],
+        "performance_schedule": "daily"
+      },
+      "test_environments": {
+        "development": {
+          "auto_run": ["unit_tests"],
+          "mock_services": true
+        },
+        "staging": {
+          "auto_run": ["unit_tests", "integration_tests"],
+          "real_services": true
+        },
+        "production": {
+          "auto_run": ["smoke_tests"],
+          "monitoring_only": true
+        }
+      }
+    },
+    "performance_monitoring": {
+      "continuous_monitoring": {
+        "interval": "5m",
+        "metrics": ["response_time", "error_rate", "throughput"],
+        "alerts": {
+          "response_time_threshold": "500ms",
+          "error_rate_threshold": "1%"
+        }
+      },
+      "load_test_schedule": {
+        "daily": ["PT001"],
+        "weekly": ["PT002", "PT003"],
+        "monthly": ["full_system_test"]
+      }
+    },
+    "reporting": {
+      "formats": ["json", "html", "junit"],
+      "destinations": ["file", "slack", "email"],
+      "dashboard_url": "http://localhost:8870/test-results"
+    }
+  }
+}
