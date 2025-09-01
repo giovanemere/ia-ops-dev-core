@@ -1,6 +1,6 @@
 # Arquitectura del Sistema
 
-IA-Ops Dev Core Services está diseñado como un ecosistema modular y escalable que integra múltiples servicios para proporcionar una plataforma completa de desarrollo.
+IA-Ops Dev Core Services está diseñado como un ecosistema modular y escalable que integra múltiples servicios para proporcionar una plataforma completa de desarrollo con soporte multi-provider.
 
 ## 🏗️ Visión General
 
@@ -10,6 +10,7 @@ graph TB
         FE[ia-ops-docs Frontend]
         SP[Swagger Portal :8870]
         TP[Testing Portal :18860-18862]
+        PA[Provider Admin :8866]
     end
     
     subgraph "API Gateway Layer"
@@ -25,10 +26,12 @@ graph TB
         TD[TechDocs Builder :8865]
     end
     
-    subgraph "External Integrations"
+    subgraph "Provider Integrations"
         GH[GitHub API]
-        CLONE[Repository Cloning]
-        MKDOCS[MkDocs Builder]
+        AZ[Azure Services]
+        AWS[AWS Services]
+        GCP[GCP Services]
+        AI[OpenAI API]
     end
     
     subgraph "Data Layer"
@@ -41,10 +44,12 @@ graph TB
     PROXY --> RM
     SP --> RM
     TP --> RM
+    PA --> PG
     RM --> GH
-    RM --> CLONE
-    RM --> MKDOCS
-    MKDOCS --> MN
+    RM --> AZ
+    RM --> AWS
+    RM --> GCP
+    RM --> AI
     RM --> PG
     TM --> RD
     TM --> PG
@@ -59,19 +64,24 @@ graph TB
 - Comunicación a través de APIs REST bien definidas
 - Interfaces estándar con Swagger/OpenAPI
 
-### 2. **Escalabilidad**
+### 2. **Multi-Provider**
+- Soporte para múltiples proveedores de servicios
+- Configuración dinámica de providers
+- Abstracción de APIs específicas de cada proveedor
+
+### 3. **Escalabilidad**
 - Servicios containerizados con Docker
 - Balanceador de carga integrado
 - Cache distribuido con Redis
 
-### 3. **Observabilidad**
+### 4. **Observabilidad**
 - Logs centralizados
 - Health checks en todos los servicios
 - Métricas de rendimiento
 
-### 4. **Seguridad**
+### 5. **Seguridad**
 - Autenticación por tokens
-- Comunicación HTTPS
+- Encriptación de credenciales
 - Validación de entrada
 
 ## 🔧 Componentes Principales
@@ -93,6 +103,15 @@ graph TB
   - Pruebas interactivas de endpoints
   - Documentación auto-generada
 
+#### **Provider Admin Portal**
+- **Tecnología**: Flask + RestX
+- **Puerto**: 8866
+- **Función**: Administración de providers multi-cloud
+- **Características**:
+  - CRUD completo de providers
+  - Test de conexión automático
+  - Gestión de credenciales encriptadas
+
 #### **Testing Portal**
 - **Tecnología**: Flask + Mock Services
 - **Puertos**: 18860-18862
@@ -112,6 +131,16 @@ graph TB
   - MkDocs para construcción de documentación
   - MinIO para almacenamiento
   - PostgreSQL para metadatos
+  - Provider Admin para configuración
+
+#### **Provider Administration**
+- **Puerto**: 8866
+- **Función**: Gestión centralizada de providers
+- **Características**:
+  - Soporte para GitHub, Azure, AWS, GCP, OpenAI
+  - Credenciales encriptadas
+  - Test de conexión automático
+  - Configuración dinámica
 
 #### **Task Manager**
 - **Puerto**: 8861
@@ -131,6 +160,33 @@ graph TB
   - Exportación de datos
   - Dashboard de métricas
 
+### Provider Integrations
+
+#### **GitHub Integration**
+- **Funciones**: Repositorios, organizaciones, webhooks
+- **Autenticación**: Personal Access Tokens
+- **Permisos**: repo, read:org, read:user
+
+#### **Azure Integration**
+- **Funciones**: Resource Groups, Storage, VMs
+- **Autenticación**: Service Principal
+- **Configuración**: Client ID, Secret, Tenant ID
+
+#### **AWS Integration**
+- **Funciones**: S3, STS, EC2, Lambda
+- **Autenticación**: Access Keys
+- **Permisos**: IAM policies específicos
+
+#### **GCP Integration**
+- **Funciones**: Storage, Compute, BigQuery
+- **Autenticación**: Service Account
+- **Configuración**: Project ID, Key JSON
+
+#### **OpenAI Integration**
+- **Funciones**: Modelos, Completions, Embeddings
+- **Autenticación**: API Key
+- **Límites**: Rate limiting por plan
+
 ### Data Layer
 
 #### **PostgreSQL**
@@ -138,6 +194,7 @@ graph TB
 - **Función**: Base de datos principal
 - **Esquemas**:
   - Repositorios y metadatos
+  - Providers y credenciales
   - Tareas y estados
   - Logs y auditoría
   - Configuraciones
@@ -162,13 +219,33 @@ graph TB
 
 ## 🔄 Flujos de Datos
 
-### Flujo de Creación de Proyecto
+### Flujo de Configuración de Provider
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant PA as Provider Admin
+    participant PS as Provider Service
+    participant EXT as External API
+    participant DB as PostgreSQL
+
+    U->>PA: Configurar provider
+    PA->>PS: Validar configuración
+    PS->>EXT: Test conexión
+    EXT-->>PS: Respuesta
+    PS-->>PA: Resultado test
+    PA->>DB: Guardar provider
+    PA-->>U: Confirmación
+```
+
+### Flujo de Creación de Proyecto con Provider
 
 ```mermaid
 sequenceDiagram
     participant U as Usuario
     participant FE as Frontend
     participant RM as Repository Manager
+    participant PA as Provider Admin
     participant GH as GitHub API
     participant MK as MkDocs Service
     participant MN as MinIO
@@ -176,6 +253,8 @@ sequenceDiagram
 
     U->>FE: Crear proyecto
     FE->>RM: POST /api/v1/repositories/projects
+    RM->>PA: Obtener provider GitHub
+    PA-->>RM: Configuración provider
     RM->>GH: Listar repositorios
     GH-->>RM: Lista de repos
     RM->>RM: Clonar repositorio
@@ -188,23 +267,26 @@ sequenceDiagram
     FE-->>U: Confirmación + URL docs
 ```
 
-### Flujo de Testing
+### Flujo de Testing Multi-Provider
 
 ```mermaid
 sequenceDiagram
     participant T as Tester
     participant TP as Testing Portal
     participant MS as Mock Services
+    participant PA as Provider Admin
     participant RM as Repository Manager
 
     T->>TP: Ejecutar pruebas
     TP->>MS: Iniciar mock services
     MS-->>TP: Services ready
+    TP->>PA: Probar providers
+    PA-->>TP: Provider status
     TP->>RM: Pruebas de integración
     RM-->>TP: Respuestas reales
     TP->>MS: Pruebas con mocks
     MS-->>TP: Respuestas simuladas
-    TP-->>T: Reporte de pruebas
+    TP-->>T: Reporte completo
 ```
 
 ## 🚀 Patrones de Arquitectura
@@ -219,12 +301,17 @@ sequenceDiagram
 - Documentación Swagger completa
 - Versionado de APIs
 
-### 3. **Event-Driven**
+### 3. **Multi-Tenant Provider**
+- Soporte para múltiples providers del mismo tipo
+- Configuración por tenant/organización
+- Aislamiento de credenciales
+
+### 4. **Event-Driven**
 - Notificaciones asíncronas
 - Pub/Sub con Redis
 - Procesamiento de eventos
 
-### 4. **CQRS (Command Query Responsibility Segregation)**
+### 5. **CQRS (Command Query Responsibility Segregation)**
 - Separación de operaciones de lectura y escritura
 - Optimización específica por tipo de operación
 - Cache inteligente
@@ -235,6 +322,11 @@ sequenceDiagram
 - Tokens JWT para autenticación
 - RBAC (Role-Based Access Control)
 - Rate limiting por endpoint
+
+### Gestión de Credenciales
+- Encriptación de credenciales de providers
+- Rotación automática de tokens
+- Auditoría de acceso a credenciales
 
 ### Comunicación Segura
 - HTTPS en producción
@@ -251,17 +343,20 @@ sequenceDiagram
 ### Health Checks
 - Endpoint `/health` en todos los servicios
 - Verificación de dependencias
+- Estado de conexiones a providers
 - Estado de conexiones a bases de datos
 
 ### Logging
 - Logs estructurados en JSON
 - Niveles de log configurables
 - Agregación centralizada
+- Auditoría de operaciones con providers
 
 ### Métricas
-- Métricas de rendimiento
-- Contadores de requests
-- Tiempo de respuesta
+- Métricas de rendimiento por servicio
+- Contadores de requests por provider
+- Tiempo de respuesta por API externa
+- Uso de credenciales y rate limits
 
 ## 🔄 Escalabilidad
 
@@ -277,11 +372,18 @@ sequenceDiagram
 
 ### Caching Strategy
 - Cache de aplicación con Redis
+- Cache de respuestas de providers
 - Cache de base de datos
 - CDN para assets estáticos
+
+### Provider Load Balancing
+- Distribución de carga entre providers del mismo tipo
+- Failover automático entre providers
+- Rate limiting por provider
 
 ## 🚀 Próximos Pasos
 
 - [**Servicios**](services.md) - Detalles de cada servicio
 - [**Integración**](integration.md) - Patrones de integración
 - [**APIs**](../apis/repository-manager.md) - Documentación de endpoints
+- [**Providers**](../providers/configuration.md) - Configuración de providers

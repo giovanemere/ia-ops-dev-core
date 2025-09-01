@@ -1,6 +1,6 @@
 # 🛠️ IA-Ops Dev Core Services
 
-**Ecosistema completo de desarrollo para IA-Ops**: servicios centrales con integración GitHub, construcción automática de documentación MkDocs, portal de pruebas, y despliegue en Docker Hub.
+**Ecosistema completo de desarrollo para IA-Ops**: servicios centrales con integración GitHub, construcción automática de documentación MkDocs, portal de pruebas, administración de providers (GitHub, Azure, AWS, GCP, OpenAI) y despliegue en Docker Hub.
 
 ## 🚀 Arquitectura de la Solución
 
@@ -10,6 +10,7 @@ graph TB
         FE[ia-ops-docs Frontend]
         SP[Swagger Portal :8870]
         TP[Testing Portal :18860-18862]
+        PA[Provider Admin :8866]
     end
     
     subgraph "Backend Services"
@@ -21,10 +22,12 @@ graph TB
         TD[TechDocs Builder :8865]
     end
     
-    subgraph "GitHub Integration"
+    subgraph "Provider Integrations"
         GH[GitHub API]
-        CLONE[Repository Cloning]
-        MKDOCS[MkDocs Builder]
+        AZ[Azure Services]
+        AWS[AWS Services]
+        GCP[GCP Services]
+        AI[OpenAI API]
     end
     
     subgraph "Data Layer"
@@ -36,10 +39,12 @@ graph TB
     FE --> RM
     SP --> RM
     TP --> RM
+    PA --> PG
     RM --> GH
-    RM --> CLONE
-    RM --> MKDOCS
-    MKDOCS --> MN
+    RM --> AZ
+    RM --> AWS
+    RM --> GCP
+    RM --> AI
     RM --> PG
     TM --> RD
     TM --> PG
@@ -49,12 +54,12 @@ graph TB
 
 ## 🌟 Características Principales
 
-### 🔗 **Integración GitHub Completa**
-- **Listado de repositorios** por usuario/organización
-- **Clonación automática** de repositorios
-- **Construcción MkDocs** con Material theme
-- **Subida automática** a MinIO
-- **Gestión de proyectos** con estructura completa
+### 🔗 **Integración Multi-Provider**
+- **GitHub**: Repositorios, organizaciones, tokens
+- **Azure**: Subscriptions, Resource Groups, Service Principals
+- **AWS**: S3, STS, Access Keys, regiones
+- **GCP**: Storage, Service Accounts, proyectos
+- **OpenAI**: API Keys, modelos, organizaciones
 
 ### 📚 **Sistema de Documentación**
 - **Portal Swagger** centralizado (puerto 8870)
@@ -68,6 +73,12 @@ graph TB
 - **Simulación realista** de servicios backend
 - **Health checks** y monitoreo
 
+### ⚙️ **Administración de Providers**
+- **CRUD completo** para gestión de providers
+- **Credenciales encriptadas** con rotación
+- **Test de conexión** automático
+- **Configuración dinámica** por provider
+
 ### 🐳 **Despliegue Docker Hub**
 - **Imágenes versionadas** (v2.0.0)
 - **Despliegue en producción** listo
@@ -80,11 +91,16 @@ graph TB
 ia-ops-dev-core/
 ├── api/                           # APIs principales
 │   ├── repository_manager_enhanced.py  # GitHub + MkDocs + MinIO
+│   ├── provider_admin_api.py           # Administración providers
 │   ├── github_service.py              # Integración GitHub
 │   ├── mkdocs_service.py              # Construcción docs
 │   ├── task_manager_swagger.py        # Gestión tareas
 │   ├── log_manager.py                 # Gestión logs
 │   ├── swagger_portal.py              # Portal documentación
+│   ├── models/                        # Modelos de datos
+│   │   └── providers.py               # Modelos providers
+│   ├── services/                      # Servicios integración
+│   │   └── provider_service.py        # Servicios providers
 │   └── database.py                    # Modelos PostgreSQL
 ├── testing-portal/                # Portal de pruebas
 │   ├── mock_services.py           # Servicios simulados
@@ -93,6 +109,10 @@ ia-ops-dev-core/
 ├── frontend-integration/          # Integración frontend
 │   ├── api_client.py              # Cliente API
 │   └── frontend_routes.py         # Rutas proxy
+├── docs/                          # Documentación MkDocs
+│   ├── providers/                 # Docs providers
+│   │   └── configuration.md       # Configuración providers
+│   └── ...                        # Otras documentaciones
 ├── docker-compose.production.yml  # Despliegue producción
 ├── build-and-push.sh             # Script Docker Hub
 └── README.md                      # Esta documentación
@@ -111,8 +131,11 @@ cd ia-ops-dev-core
 # Copiar configuración
 cp docker/.env.example docker/.env
 
-# Configurar GitHub (opcional)
+# Configurar providers (opcional)
 export GITHUB_TOKEN="your_github_token"
+export AWS_ACCESS_KEY_ID="your_aws_key"
+export AZURE_CLIENT_ID="your_azure_client"
+export OPENAI_API_KEY="your_openai_key"
 ```
 
 ### 3. **Iniciar Servicios Completos**
@@ -138,6 +161,7 @@ docker-compose -f docker-compose.production.yml up -d
 | Servicio | URL | Descripción |
 |----------|-----|-------------|
 | **Swagger Portal** | http://localhost:8870 | Portal centralizado de documentación |
+| **Provider Admin** | http://localhost:8866 | Administración de providers |
 | **Testing Portal** | http://localhost:18860-18862 | Mock services y pruebas |
 
 ### **APIs de Servicios**
@@ -149,6 +173,7 @@ docker-compose -f docker-compose.production.yml up -d
 | **DataSync Manager** | 8863 | [/docs/](http://localhost:8863/docs/) | Sincronización datos |
 | **GitHub Runner** | 8864 | [/docs/](http://localhost:8864/docs/) | Gestión runners |
 | **TechDocs Builder** | 8865 | [/docs/](http://localhost:8865/docs/) | Constructor MkDocs |
+| **Provider Admin** | 8866 | [/docs/](http://localhost:8866/docs/) | Administración providers |
 
 ### **Infraestructura**
 | Componente | Puerto | Acceso |
@@ -178,6 +203,34 @@ POST /api/v1/repositories/projects
 POST /api/v1/docs/{id}/build
 ```
 
+### ⚙️ **Provider Administration**
+```bash
+# Listar providers
+GET /api/v1/providers/
+
+# Crear provider GitHub
+POST /api/v1/providers/
+{
+  "name": "GitHub Principal",
+  "type": "github",
+  "description": "Integración principal con GitHub",
+  "config": {
+    "token": "ghp_xxxxxxxxxxxxxxxxxxxx",
+    "username": "mi-usuario"
+  }
+}
+
+# Probar conexión
+POST /api/v1/config/test-connection
+{
+  "provider_type": "github",
+  "config": {"token": "ghp_xxxxxxxxxxxxxxxxxxxx"}
+}
+
+# Obtener requisitos
+GET /api/v1/config/requirements/aws
+```
+
 ### 🧪 **Testing Portal**
 ```bash
 # Health check mock services
@@ -198,6 +251,33 @@ GET /api/v1/tasks/{id}      # Obtener tarea
 PUT /api/v1/tasks/{id}      # Actualizar tarea
 ```
 
+## 🔗 Providers Soportados
+
+### **GitHub Provider**
+- **Datos**: Token, username, organization
+- **Funciones**: Listar repos, clonar, webhooks
+- **Permisos**: repo, read:org, read:user
+
+### **Azure Provider**
+- **Datos**: Subscription ID, Client ID, Client Secret, Tenant ID
+- **Funciones**: Resource Groups, Storage, VMs
+- **Configuración**: Service Principal en Azure AD
+
+### **AWS Provider**
+- **Datos**: Access Key ID, Secret Access Key, Region
+- **Funciones**: S3, STS, EC2, Lambda
+- **Permisos**: IAM policies específicos
+
+### **GCP Provider**
+- **Datos**: Project ID, Service Account Key JSON
+- **Funciones**: Storage, Compute, BigQuery
+- **Configuración**: Service Account con roles
+
+### **OpenAI Provider**
+- **Datos**: API Key, Organization ID
+- **Funciones**: Modelos, Completions, Embeddings
+- **Límites**: Rate limiting por plan
+
 ## 🐳 Docker Hub Images
 
 ### **Imágenes Disponibles (v2.0.0)**
@@ -211,6 +291,7 @@ docker pull edissonz8809/ia-ops-github-runner:2.0.0
 docker pull edissonz8809/ia-ops-techdocs-builder:2.0.0
 docker pull edissonz8809/ia-ops-swagger-portal:2.0.0
 docker pull edissonz8809/ia-ops-testing-portal:2.0.0
+docker pull edissonz8809/ia-ops-provider-admin:2.0.0
 ```
 
 ### **Despliegue Producción**
@@ -233,9 +314,9 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ### **Flujo de Integración**
 1. **Frontend (ia-ops-docs)** → Consume APIs via proxy
 2. **Backend (ia-ops-dev-core)** → Procesa requests y gestiona datos
-3. **GitHub** → Clona repositorios y construye docs
+3. **Providers** → Integración con GitHub, Azure, AWS, GCP, OpenAI
 4. **MinIO** → Almacena documentación construida
-5. **PostgreSQL** → Persiste metadatos y configuración
+5. **PostgreSQL** → Persiste metadatos, providers y configuración
 6. **Redis** → Cache y gestión de colas
 
 ## 🧪 Pruebas y Testing
@@ -253,6 +334,9 @@ python testing-portal/performance_automation.py
 
 # Pruebas GitHub
 python test_github_functionality.py
+
+# Pruebas Provider Admin
+python test_provider_admin.py
 ```
 
 ### **Mock Services**
@@ -269,6 +353,7 @@ python test_github_functionality.py
 curl http://localhost:8870/health  # Swagger Portal
 curl http://localhost:8860/health  # Repository Manager
 curl http://localhost:8861/health  # Task Manager
+curl http://localhost:8866/api/v1/health/  # Provider Admin
 ```
 
 ### **Logs de Servicios**
@@ -276,6 +361,7 @@ curl http://localhost:8861/health  # Task Manager
 # Ver logs en tiempo real
 docker logs -f iaops-repository-manager
 docker logs -f iaops-swagger-portal
+docker logs -f iaops-provider-admin
 docker logs -f iaops-testing-portal
 ```
 
@@ -304,6 +390,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 - **[FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md)** - Guía integración frontend
 - **[USER_STORIES.md](./USER_STORIES.md)** - Historias de usuario
 - **[VERITAS_API_SPECS.md](./VERITAS_API_SPECS.md)** - Especificaciones API Veritas
+- **[Provider Configuration](./docs/providers/configuration.md)** - Configuración de providers
 
 ## 🤝 Contribución
 
@@ -319,4 +406,4 @@ Este proyecto está bajo la licencia MIT.
 
 ---
 
-**🚀 IA-Ops Dev Core Services - Ecosistema completo de desarrollo con integración GitHub, MkDocs, MinIO y portal de pruebas**
+**🚀 IA-Ops Dev Core Services - Ecosistema completo de desarrollo con integración multi-provider, GitHub, MkDocs, MinIO y portal de pruebas**
