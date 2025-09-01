@@ -1,0 +1,85 @@
+site_name: IA-Ops Dev Core Services
+site_description: Ecosistema completo de desarrollo para IA-Ops con integración GitHub, MkDocs, MinIO y portal de pruebas
+site_url: https://giovanemere.github.io/ia-ops-dev-core/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - toc.integrate
+    - content.code.annotate
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Guía de Inicio:
+    - Instalación: getting-started/installation.md
+    - Configuración: getting-started/configuration.md
+    - Primer Uso: getting-started/first-use.md
+  - Arquitectura:
+    - Visión General: architecture/overview.md
+    - Servicios: architecture/services.md
+    - Integración: architecture/integration.md
+  - APIs:
+    - Repository Manager: apis/repository-manager.md
+    - Task Manager: apis/task-manager.md
+    - GitHub Integration: apis/github-integration.md
+    - MkDocs Service: apis/mkdocs-service.md
+  - Infraestructura:
+    - PostgreSQL: infrastructure/postgresql.md
+    - Redis: infrastructure/redis.md
+    - MinIO: infrastructure/minio.md
+    - Docker: infrastructure/docker.md
+  - Testing:
+    - Portal de Pruebas: testing/testing-portal.md
+    - Mock Services: testing/mock-services.md
+    - Automatización: testing/automation.md
+  - Despliegue:
+    - Docker Hub: deployment/docker-hub.md
+    - Producción: deployment/production.md
+    - Monitoreo: deployment/monitoring.md
+  - Desarrollo:
+    - Contribución: development/contributing.md
+    - API Guidelines: development/api-guidelines.md
+    - Testing Guidelines: development/testing-guidelines.md
+
+plugins:
+  - search
+  - mermaid2
