@@ -12,7 +12,7 @@ docker compose ps
 echo ""
 echo "🔍 Health Checks:"
 
-services=("8850:Repository Manager" "8851:Task Manager" "8852:Log Manager")
+services=("8860:Repository Manager" "8861:Task Manager" "8862:Log Manager")
 
 for service in "${services[@]}"; do
     port=$(echo $service | cut -d: -f1)

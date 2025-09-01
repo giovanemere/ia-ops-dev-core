@@ -8,7 +8,7 @@ services:
     container_name: iaops-repository-manager
     restart: unless-stopped
     ports:
-      - "${REPOSITORY_MANAGER_PORT:-8850}:8850"
+      - "${REPOSITORY_MANAGER_PORT:-8860}:8850"
     environment:
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
@@ -31,7 +31,7 @@ services:
     container_name: iaops-task-manager
     restart: unless-stopped
     ports:
-      - "${TASK_MANAGER_PORT:-8851}:8851"
+      - "${TASK_MANAGER_PORT:-8861}:8851"
     environment:
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
@@ -54,7 +54,7 @@ services:
     container_name: iaops-log-manager
     restart: unless-stopped
     ports:
-      - "${LOG_MANAGER_PORT:-8852}:8852"
+      - "${LOG_MANAGER_PORT:-8862}:8852"
     volumes:
       - ../data:/app/data
       - ../logs:/app/logs
