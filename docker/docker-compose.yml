@@ -10,7 +10,9 @@ services:
     ports:
       - "${REPOSITORY_MANAGER_PORT:-8860}:8850"
     environment:
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5434/iaops}
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6380/0}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-host.docker.internal:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
     volumes:
@@ -18,6 +20,8 @@ services:
       - ../logs:/app/logs
     networks:
       - dev-core-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8850/health"]
       interval: 30s
@@ -33,7 +37,9 @@ services:
     ports:
       - "${TASK_MANAGER_PORT:-8861}:8851"
     environment:
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5434/iaops}
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6380/0}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-host.docker.internal:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
     volumes:
@@ -41,6 +47,8 @@ services:
       - ../logs:/app/logs
     networks:
       - dev-core-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8851/health"]
       interval: 30s
@@ -55,12 +63,17 @@ services:
     restart: unless-stopped
     ports:
       - "${LOG_MANAGER_PORT:-8862}:8852"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5434/iaops}
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6380/0}
     volumes:
       - ../data:/app/data
       - ../logs:/app/logs
       - /home/giovanemere/ia-ops/ia-ops-docs/logs:/app/logs:ro
     networks:
       - dev-core-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8852/health"]
       interval: 30s
@@ -76,7 +89,9 @@ services:
     ports:
       - "${DATASYNC_MANAGER_PORT:-8863}:8863"
     environment:
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9898}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5434/iaops}
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6380/0}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-host.docker.internal:9898}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
     volumes:
@@ -84,6 +99,8 @@ services:
       - ../logs:/app/logs
     networks:
       - dev-core-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8863/health"]
       interval: 30s
@@ -99,6 +116,8 @@ services:
     ports:
       - "${GITHUB_RUNNER_MANAGER_PORT:-8864}:8864"
     environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5434/iaops}
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6380/0}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - GITHUB_REPO=${GITHUB_REPO:-giovanemere/ia-ops}
     volumes:
@@ -106,6 +125,8 @@ services:
       - ../logs:/app/logs
     networks:
       - dev-core-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8864/health"]
       interval: 30s
@@ -120,13 +141,48 @@ services:
     restart: unless-stopped
     ports:
       - "${TECHDOCS_BUILDER_MANAGER_PORT:-8865}:8865"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5434/iaops}
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6380/0}
     volumes:
       - ../data:/app/data
       - ../logs:/app/logs
     networks:
       - dev-core-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8865/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  swagger-portal:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.swagger
+    container_name: iaops-swagger-portal
+    restart: unless-stopped
+    ports:
+      - "${SWAGGER_PORTAL_PORT:-8870}:8870"
+    environment:
+      - REPOSITORY_MANAGER_URL=http://iaops-repository-manager:8850
+      - TASK_MANAGER_URL=http://iaops-task-manager:8851
+      - LOG_MANAGER_URL=http://iaops-log-manager:8852
+      - DATASYNC_MANAGER_URL=http://iaops-datasync-manager:8863
+      - GITHUB_RUNNER_MANAGER_URL=http://iaops-github-runner-manager:8864
+      - TECHDOCS_BUILDER_URL=http://iaops-techdocs-builder-manager:8865
+    networks:
+      - dev-core-network
+    depends_on:
+      - repository-manager
+      - task-manager
+      - log-manager
+      - datasync-manager
+      - github-runner-manager
+      - techdocs-builder-manager
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8870/api/status"]
       interval: 30s
       timeout: 10s
       retries: 3

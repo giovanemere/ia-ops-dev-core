@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY database.py .
 COPY repository_manager.py .
 
-RUN mkdir -p data logs
-
 RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN mkdir -p data logs
 RUN chown -R appuser:appuser /app
 USER appuser
 
