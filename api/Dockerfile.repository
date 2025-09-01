@@ -11,7 +11,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY database.py .
-COPY repository_manager.py .
+COPY repository_manager_swagger.py repository_manager.py
+COPY swagger_config.py .
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN mkdir -p data logs

@@ -9,7 +9,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY task_manager.py .
+COPY database.py .
+COPY task_manager_swagger.py task_manager.py
+COPY swagger_config.py .
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN mkdir -p data logs

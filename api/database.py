@@ -46,7 +46,7 @@ class Repository(Base):
     status = Column(String, default="active")
     created_at = Column(DateTime, default=datetime.utcnow)
     last_sync = Column(DateTime)
-    metadata = Column(JSON)
+    repo_metadata = Column(JSON)
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -71,7 +71,7 @@ class LogEntry(Base):
     level = Column(String)  # info, warning, error, debug
     message = Column(Text)
     timestamp = Column(DateTime, default=datetime.utcnow)
-    metadata = Column(JSON)
+    log_metadata = Column(JSON)
 
 class SyncJob(Base):
     __tablename__ = "sync_jobs"
