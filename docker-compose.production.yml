@@ -144,6 +144,24 @@ services:
       timeout: 10s
       retries: 3
 
+  # Frontend Configuration API
+  frontend-config:
+    image: edissonz8809/ia-ops-frontend-config:2.0.0
+    container_name: iaops-frontend-config
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_CONFIG_PORT:-8868}:8868"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@host.docker.internal:5434/iaops}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8868/api/v1/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Provider Administration API
   provider-admin:
     image: edissonz8809/ia-ops-provider-admin:2.0.0
