@@ -49,6 +49,18 @@ SERVICES = {
         'url': 'http://localhost:8865',
         'port': 8865,
         'description': 'Constructor de documentación con PostgreSQL'
+    },
+    'provider-admin': {
+        'name': 'Provider Administration',
+        'url': 'http://localhost:8866',
+        'port': 8866,
+        'description': 'Administración de providers multi-cloud (GitHub, Azure, AWS, GCP, OpenAI)'
+    },
+    'frontend-config': {
+        'name': 'Frontend Configuration API',
+        'url': 'http://localhost:8868',
+        'port': 8868,
+        'description': 'Almacenamiento y gestión de configuraciones del frontend'
     }
 }
 
@@ -393,7 +405,9 @@ def get_service_integrations(service_id):
         'log-manager': ['postgresql'],
         'datasync-manager': ['postgresql', 'minio'],
         'github-runner-manager': ['postgresql'],
-        'techdocs-builder': ['postgresql']
+        'techdocs-builder': ['postgresql'],
+        'provider-admin': ['postgresql'],
+        'frontend-config': ['postgresql']
     }
     return integrations_map.get(service_id, [])
 
