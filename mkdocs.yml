@@ -1,19 +1,15 @@
 site_name: IA-Ops Dev Core Services
-site_description: Ecosistema completo de desarrollo para IA-Ops con integración multi-provider, GitHub, MkDocs, MinIO y portal de pruebas
-site_url: https://giovanemere.github.io/ia-ops-dev-core/
+site_description: Ecosistema completo de desarrollo para IA-Ops con Service Layer unificado
+site_author: IA-Ops Team
+site_url: https://ia-ops-dev-core.docs
 
+# Repository
+repo_name: giovanemere/ia-ops-dev-core
+repo_url: https://github.com/giovanemere/ia-ops-dev-core
+
+# Configuration
 theme:
   name: material
-  features:
-    - navigation.tabs
-    - navigation.sections
-    - navigation.expand
-    - navigation.top
-    - search.highlight
-    - search.share
-    - toc.integrate
-    - content.code.annotate
-    - content.code.copy
   palette:
     - scheme: default
       primary: blue
@@ -27,67 +23,66 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
 
+# Extensions
 markdown_extensions:
-  - admonition
-  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
   - pymdownx.tabbed:
       alternate_style: true
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
   - attr_list
   - md_in_html
-  - toc:
-      permalink: true
 
+# Navigation
 nav:
   - Home: index.md
-  - Guía de Inicio:
-    - Instalación: getting-started/installation.md
-    - Configuración: getting-started/configuration.md
-    - Primer Uso: getting-started/first-use.md
-  - Arquitectura:
-    - Visión General: architecture/overview.md
-    - Servicios: architecture/services.md
-    - Integración: architecture/integration.md
-  - APIs:
-    - Repository Manager: apis/repository-manager.md
-    - Task Manager: apis/task-manager.md
-    - Provider Admin: apis/provider-admin.md
-    - GitHub Integration: apis/github-integration.md
-    - MkDocs Service: apis/mkdocs-service.md
+  - Architecture:
+    - Service Layer: architecture/service-layer.md
+    - Infrastructure: architecture/infrastructure.md
+    - Integration: architecture/integration.md
+  - API Documentation:
+    - Overview: api/overview.md
+    - Endpoints: api/endpoints.md
+    - Authentication: api/authentication.md
   - Providers:
-    - Configuración: providers/configuration.md
+    - Configuration: providers/configuration.md
     - GitHub: providers/github.md
     - Azure: providers/azure.md
     - AWS: providers/aws.md
     - GCP: providers/gcp.md
     - OpenAI: providers/openai.md
-  - Infraestructura:
-    - PostgreSQL: infrastructure/postgresql.md
-    - Redis: infrastructure/redis.md
-    - MinIO: infrastructure/minio.md
-    - Docker: infrastructure/docker.md
-  - Testing:
-    - Portal de Pruebas: testing/testing-portal.md
-    - Mock Services: testing/mock-services.md
-    - Automatización: testing/automation.md
-  - Despliegue:
-    - Docker Hub: deployment/docker-hub.md
-    - Producción: deployment/production.md
-    - Monitoreo: deployment/monitoring.md
-  - Desarrollo:
-    - Contribución: development/contributing.md
-    - API Guidelines: development/api-guidelines.md
-    - Testing Guidelines: development/testing-guidelines.md
+  - Development:
+    - Getting Started: development/getting-started.md
+    - Testing: development/testing.md
+    - Deployment: development/deployment.md
+  - User Stories: user-stories.md
 
+# Plugins
 plugins:
   - search
   - mermaid2
+
+# Extra
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/giovanemere/ia-ops-dev-core
+  version:
+    provider: mike

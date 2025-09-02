@@ -4,26 +4,30 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    git \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
+# Copy requirements
+COPY api/requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
-COPY swagger_portal.py .
-COPY swagger_config.py .
+# Copy application code
+COPY service_layer_complete.py .
+COPY provider_service_real.py .
+COPY api/ ./api/
 
-# Create directories
+# Create necessary directories
 RUN mkdir -p /app/data /app/logs
 
 # Expose port
-EXPOSE 8870
+EXPOSE 8800
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8870/api/status || exit 1
+    CMD curl -f http://localhost:8800/health || exit 1
 
 # Run the application
-CMD ["python", "swagger_portal.py"]
+CMD ["python", "service_layer_complete.py"]

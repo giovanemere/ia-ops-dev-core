@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MkDocs Service - Construcción de documentación y subida a MinIO
+MkDocs Service - UN SOLO BUCKET con organización por proyectos
 """
 
 import os
@@ -11,17 +11,65 @@ from typing import Dict, Optional
 import logging
 from minio import Minio
 from minio.error import S3Error
+from db_config import db_config
+from storage_helper import get_project_path, get_storage_url
 
 logger = logging.getLogger(__name__)
 
 class MkDocsService:
     def __init__(self, minio_client: Optional[Minio] = None):
-        self.minio_client = minio_client
-        self.bucket_name = 'docs'
+        # Cliente MinIO desde configuración PostgreSQL
+        self.minio_client = minio_client or db_config.get_minio_client()
+        # UN SOLO BUCKET desde configuración PostgreSQL
+        self.bucket_name = db_config.get_storage_bucket()
     
-    def has_mkdocs_config(self, repo_path: str) -> bool:
-        """Verificar si el repositorio tiene configuración MkDocs"""
-        config_files = ['mkdocs.yml', 'mkdocs.yaml']
+    def upload_to_minio(self, local_path: str, project_name: str) -> Dict:
+        """Subir documentación con organización por proyecto"""
+        try:
+            if not self.minio_client:
+                return {'success': False, 'error': 'MinIO client not configured'}
+            
+            # Crear bucket si no existe
+            if not self.minio_client.bucket_exists(self.bucket_name):
+                self.minio_client.make_bucket(self.bucket_name)
+            
+            uploaded_files = []
+            
+            # Subir archivos con estructura organizada por proyecto
+            for root, dirs, files in os.walk(local_path):
+                for file in files:
+                    local_file = os.path.join(root, file)
+                    relative_path = os.path.relpath(local_file, local_path)
+                    
+                    # Usar estructura organizada: proyecto/docs/archivo
+                    object_name = get_project_path(project_name, "docs", relative_path)
+                    
+                    self.minio_client.fput_object(
+                        self.bucket_name,
+                        object_name,
+                        local_file
+                    )
+                    uploaded_files.append(object_name)
+            
+            # URL organizada por proyecto
+            docs_url = get_storage_url(self.bucket_name, project_name, "docs", "index.html")
+            
+            return {
+                'success': True,
+                'bucket': self.bucket_name,
+                'project': project_name,
+                'files_uploaded': len(uploaded_files),
+                'files': uploaded_files,
+                'url': docs_url,
+                'organized_structure': True
+            }
+            
+        except S3Error as e:
+            logger.error(f"MinIO error: {e}")
+            return {'success': False, 'error': f'MinIO error: {e}'}
+        except Exception as e:
+            logger.error(f"Error uploading to MinIO: {e}")
+            return {'success': False, 'error': str(e)}
         return any(os.path.exists(os.path.join(repo_path, config)) for config in config_files)
     
     def create_mkdocs_config(self, repo_path: str, project_name: str, description: str = '') -> bool:
@@ -119,7 +167,7 @@ class MkDocsService:
                 for file in files:
                     local_file = os.path.join(root, file)
                     relative_path = os.path.relpath(local_file, local_path)
-                    object_name = f"{project_name}/{relative_path}".replace('\\', '/')
+                    object_name = f"{self.docs_folder}{project_name}/{relative_path}".replace('\\', '/')
                     
                     self.minio_client.fput_object(
                         self.bucket_name,
@@ -133,7 +181,7 @@ class MkDocsService:
                 'bucket': self.bucket_name,
                 'project': project_name,
                 'files_uploaded': len(uploaded_files),
-                'url': f"http://localhost:9898/{self.bucket_name}/{project_name}/index.html"
+                'url': f"http://{db_config.get_config('minio_endpoint')}/{self.bucket_name}/{self.docs_folder}{project_name}/index.html"
             }
             
         except S3Error as e:

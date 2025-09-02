@@ -75,7 +75,13 @@ def get_repository_models(api):
         'description': fields.String(description='Repository description')
     })
     
-    return {'repository': repository, 'repository_create': repository_create}
+    repository_clone_request = api.model('RepositoryCloneRequest', {
+        'repo_url': fields.String(required=True, description='Repository URL to clone'),
+        'branch': fields.String(description='Branch to clone', default='main'),
+        'token': fields.String(description='GitHub token for private repos')
+    })
+    
+    return {'repository': repository, 'repository_create': repository_create, 'repository_clone_request': repository_clone_request}
 
 def get_task_models(api):
     """Modelos para Task Manager"""

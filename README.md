@@ -1,25 +1,24 @@
 # 🛠️ IA-Ops Dev Core Services
 
-**Ecosistema completo de desarrollo para IA-Ops**: servicios centrales con integración GitHub, construcción automática de documentación MkDocs, portal de pruebas, administración de providers (GitHub, Azure, AWS, GCP, OpenAI) y despliegue en Docker Hub.
+**Ecosistema completo de desarrollo para IA-Ops**: Service Layer unificado con integración GitHub, construcción automática de documentación MkDocs, portal de pruebas, administración de providers (GitHub, Azure, AWS, GCP, OpenAI) y arquitectura limpia.
 
-## 🚀 Arquitectura de la Solución
+## 🚀 Arquitectura Service Layer
 
 ```mermaid
 graph TB
     subgraph "Frontend Layer"
-        FE[ia-ops-docs Frontend]
-        SP[Swagger Portal :8870]
-        TP[Testing Portal :18860-18862]
-        PA[Provider Admin :8866]
+        FE[ia-ops-docs Frontend :8080]
+        EXT[External Clients]
     end
     
-    subgraph "Backend Services"
-        RM[Repository Manager :8860]
-        TM[Task Manager :8861] 
-        LM[Log Manager :8862]
-        DS[DataSync Manager :8863]
-        GR[GitHub Runner :8864]
-        TD[TechDocs Builder :8865]
+    subgraph "Service Layer"
+        SL[IA-Ops Service Layer :8800]
+        subgraph "Core Services"
+            PM[Provider Management]
+            RM[Repository Management] 
+            TM[Task Management]
+            TO[Task Orchestration]
+        end
     end
     
     subgraph "Provider Integrations"
@@ -30,29 +29,35 @@ graph TB
         AI[OpenAI API]
     end
     
-    subgraph "Data Layer"
-        PG[(PostgreSQL :5434)]
-        RD[(Redis :6380)]
+    subgraph "Infrastructure Layer"
+        PG[(PostgreSQL :5432)]
+        RD[(Redis :6379)]
         MN[(MinIO :9898)]
     end
     
-    FE --> RM
-    SP --> RM
-    TP --> RM
-    PA --> PG
-    RM --> GH
-    RM --> AZ
-    RM --> AWS
-    RM --> GCP
-    RM --> AI
-    RM --> PG
-    TM --> RD
-    TM --> PG
-    LM --> PG
-    DS --> MN
+    FE --> SL
+    EXT --> SL
+    SL --> PM
+    SL --> RM
+    SL --> TM
+    SL --> TO
+    PM --> GH
+    PM --> AZ
+    PM --> AWS
+    PM --> GCP
+    PM --> AI
+    SL --> PG
+    SL --> RD
+    SL --> MN
 ```
 
 ## 🌟 Características Principales
+
+### 🏗️ **Service Layer Unificado**
+- **Puerto único**: 8800 como punto de entrada centralizado
+- **API unificada**: Endpoints consistentes con formato estándar
+- **Compatibilidad legacy**: Mantiene URLs existentes del frontend
+- **Documentación automática**: Swagger UI integrado en `/docs`
 
 ### 🔗 **Integración Multi-Provider**
 - **GitHub**: Repositorios, organizaciones, tokens
@@ -62,16 +67,16 @@ graph TB
 - **OpenAI**: API Keys, modelos, organizaciones
 
 ### 📚 **Sistema de Documentación**
-- **Portal Swagger** centralizado (puerto 8870)
 - **Construcción automática** de MkDocs
 - **Almacenamiento en MinIO** con URLs directas
 - **Configuración automática** si no existe
+- **Integración con GitHub** para repositorios
 
 ### 🧪 **Portal de Pruebas Integrado**
-- **Mock services** en puertos 18860-18862
+- **Testing services** integrados en Service Layer
 - **Pruebas automatizadas** (unit, integration, performance)
-- **Simulación realista** de servicios backend
-- **Health checks** y monitoreo
+- **Health checks** y monitoreo centralizado
+- **Mock services** para desarrollo
 
 ### ⚙️ **Administración de Providers**
 - **CRUD completo** para gestión de providers
@@ -79,42 +84,47 @@ graph TB
 - **Test de conexión** automático
 - **Configuración dinámica** por provider
 
-### 🐳 **Despliegue Docker Hub**
-- **Imágenes versionadas** (v2.0.0)
-- **Despliegue en producción** listo
-- **Configuración docker-compose** completa
+### 🐳 **Despliegue Simplificado**
+- **Service Layer único** en contenedor
+- **Reutilización** de infraestructura existente
+- **Configuración centralizada** en PostgreSQL
 - **Health checks** integrados
 
 ## 📁 Estructura del Proyecto
 
 ```
 ia-ops-dev-core/
-├── api/                           # APIs principales
-│   ├── repository_manager_enhanced.py  # GitHub + MkDocs + MinIO
+├── api/                           # Service Layer APIs
+│   ├── repository_manager.py          # GitHub + MkDocs + MinIO
 │   ├── provider_admin_api.py           # Administración providers
 │   ├── github_service.py              # Integración GitHub
 │   ├── mkdocs_service.py              # Construcción docs
-│   ├── task_manager_swagger.py        # Gestión tareas
+│   ├── task_manager.py                # Gestión tareas
 │   ├── log_manager.py                 # Gestión logs
-│   ├── swagger_portal.py              # Portal documentación
+│   ├── datasync_manager.py            # Sincronización datos
+│   ├── swagger_config.py              # Configuración Swagger
+│   ├── db_config.py                   # Configuración base datos
+│   ├── storage_config.py              # Configuración MinIO
 │   ├── models/                        # Modelos de datos
 │   │   └── providers.py               # Modelos providers
 │   ├── services/                      # Servicios integración
-│   │   └── provider_service.py        # Servicios providers
-│   └── database.py                    # Modelos PostgreSQL
+│   │   ├── provider_service.py        # Servicios providers
+│   │   └── repository_cloner.py       # Clonado repositorios
+│   └── database_enhanced.py           # Modelos PostgreSQL
 ├── testing-portal/                # Portal de pruebas
 │   ├── mock_services.py           # Servicios simulados
 │   ├── performance_automation.py  # Pruebas rendimiento
+│   ├── clone_test_service.py      # Pruebas clonado
 │   └── test_portal_runner.py      # Ejecutor pruebas
-├── frontend-integration/          # Integración frontend
-│   ├── api_client.py              # Cliente API
-│   └── frontend_routes.py         # Rutas proxy
 ├── docs/                          # Documentación MkDocs
 │   ├── providers/                 # Docs providers
 │   │   └── configuration.md       # Configuración providers
 │   └── ...                        # Otras documentaciones
-├── docker-compose.production.yml  # Despliegue producción
-├── build-and-push.sh             # Script Docker Hub
+├── service_layer_complete.py      # Service Layer principal
+├── docker-compose.yml             # Despliegue unificado
+├── Dockerfile.service-layer       # Imagen Service Layer
+├── setup_solution.sh              # Script configuración
+├── start.sh                       # Script inicio
 └── README.md                      # Esta documentación
 ```
 
@@ -128,9 +138,6 @@ cd ia-ops-dev-core
 
 ### 2. **Configurar Variables de Entorno**
 ```bash
-# Copiar configuración
-cp docker/.env.example docker/.env
-
 # Configurar providers (opcional)
 export GITHUB_TOKEN="your_github_token"
 export AWS_ACCESS_KEY_ID="your_aws_key"
@@ -138,48 +145,57 @@ export AZURE_CLIENT_ID="your_azure_client"
 export OPENAI_API_KEY="your_openai_key"
 ```
 
-### 3. **Iniciar Servicios Completos**
+### 3. **Iniciar Service Layer**
 ```bash
-# Opción 1: Desarrollo local
-docker-compose -f docker/docker-compose.yml up -d
+# Opción 1: Configuración automática
+./setup_solution.sh
 
-# Opción 2: Producción con Docker Hub
-docker-compose -f docker-compose.production.yml up -d
+# Opción 2: Inicio directo
+./start.sh
 
-# Opción 3: Script automatizado
-./start-production.sh
+# Opción 3: Docker Compose
+docker-compose up -d
 ```
 
 ### 4. **Verificar Servicios**
 ```bash
-./verify-services.sh
+# Health check del Service Layer
+curl http://localhost:8800/health
+
+# Documentación Swagger
+open http://localhost:8800/docs
 ```
 
 ## 🌐 URLs de Acceso
 
-### **Portales Principales**
+### **Service Layer Principal**
 | Servicio | URL | Descripción |
 |----------|-----|-------------|
-| **Swagger Portal** | http://localhost:8870 | Portal centralizado de documentación |
-| **Provider Admin** | http://localhost:8866 | Administración de providers |
-| **Testing Portal** | http://localhost:18860-18862 | Mock services y pruebas |
+| **Service Layer API** | http://localhost:8800 | API unificada principal |
+| **Swagger Documentation** | http://localhost:8800/docs | Documentación automática |
+| **Health Check** | http://localhost:8800/health | Estado del sistema |
 
-### **APIs de Servicios**
-| Servicio | Puerto | Swagger Docs | Funcionalidad |
-|----------|--------|--------------|---------------|
-| **Repository Manager** | 8860 | [/docs/](http://localhost:8860/docs/) | GitHub + MkDocs + MinIO |
-| **Task Manager** | 8861 | [/docs/](http://localhost:8861/docs/) | Gestión tareas + Redis |
-| **Log Manager** | 8862 | [/docs/](http://localhost:8862/docs/) | Visualización logs |
-| **DataSync Manager** | 8863 | [/docs/](http://localhost:8863/docs/) | Sincronización datos |
-| **GitHub Runner** | 8864 | [/docs/](http://localhost:8864/docs/) | Gestión runners |
-| **TechDocs Builder** | 8865 | [/docs/](http://localhost:8865/docs/) | Constructor MkDocs |
-| **Provider Admin** | 8866 | [/docs/](http://localhost:8866/docs/) | Administración providers |
+### **Endpoints Principales**
+| Endpoint | Método | Funcionalidad |
+|----------|--------|---------------|
+| `/api/v1/dashboard` | GET | Datos del dashboard |
+| `/api/v1/providers` | GET/POST | Gestión de providers |
+| `/api/v1/repositories` | GET/POST | Gestión de repositorios |
+| `/api/v1/tasks` | GET/POST | Gestión de tareas |
+| `/api/v1/projects` | POST | Creación de proyectos |
+
+### **Compatibilidad Legacy**
+| Endpoint Legacy | Nuevo Endpoint | Estado |
+|----------------|----------------|--------|
+| `/providers` | `/api/v1/providers` | ✅ Compatible |
+| `/repository/repositories` | `/api/v1/repositories` | ✅ Compatible |
+| `/config/test-connection` | `/api/v1/providers/test-connection` | ✅ Compatible |
 
 ### **Infraestructura**
 | Componente | Puerto | Acceso |
 |------------|--------|--------|
-| **PostgreSQL** | 5434 | Base de datos principal |
-| **Redis** | 6380 | Cache y colas |
+| **PostgreSQL** | 5432 | Base de datos principal |
+| **Redis** | 6379 | Cache y colas |
 | **MinIO** | 9898 | Almacenamiento docs |
 | **MinIO Console** | 9899 | Interfaz web MinIO |
 
@@ -278,29 +294,31 @@ PUT /api/v1/tasks/{id}      # Actualizar tarea
 - **Funciones**: Modelos, Completions, Embeddings
 - **Límites**: Rate limiting por plan
 
-## 🐳 Docker Hub Images
+## 🐳 Despliegue Service Layer
 
-### **Imágenes Disponibles (v2.0.0)**
+### **Imagen Docker Unificada**
 ```bash
-# Pull imágenes desde Docker Hub
-docker pull edissonz8809/ia-ops-repository-manager:2.0.0
-docker pull edissonz8809/ia-ops-task-manager:2.0.0
-docker pull edissonz8809/ia-ops-log-manager:2.0.0
-docker pull edissonz8809/ia-ops-datasync-manager:2.0.0
-docker pull edissonz8809/ia-ops-github-runner:2.0.0
-docker pull edissonz8809/ia-ops-techdocs-builder:2.0.0
-docker pull edissonz8809/ia-ops-swagger-portal:2.0.0
-docker pull edissonz8809/ia-ops-testing-portal:2.0.0
-docker pull edissonz8809/ia-ops-provider-admin:2.0.0
+# Construir imagen del Service Layer
+docker build -f Dockerfile.service-layer -t ia-ops-service-layer:latest .
+
+# Ejecutar Service Layer
+docker run -d \
+  --name ia-ops-service-layer \
+  -p 8800:8800 \
+  --network ia-ops-network \
+  ia-ops-service-layer:latest
 ```
 
-### **Despliegue Producción**
+### **Despliegue con Docker Compose**
 ```bash
-# Usar imágenes Docker Hub
-docker-compose -f docker-compose.production.yml up -d
+# Iniciar todos los servicios
+docker-compose up -d
 
 # Verificar estado
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Ver logs del Service Layer
+docker logs -f ia-ops-service-layer
 ```
 
 ## 🔗 Integración con Ecosistema IA-Ops
@@ -369,16 +387,19 @@ docker logs -f iaops-testing-portal
 
 ```bash
 # Iniciar todo el ecosistema
-./start-production.sh
+./setup_solution.sh
 
-# Verificar servicios
-./verify-services.sh
+# Inicio rápido
+./start.sh
 
-# Construir y subir a Docker Hub
-./build-and-push.sh
+# Verificar Service Layer
+curl http://localhost:8800/health
+
+# Ver documentación
+open http://localhost:8800/docs
 
 # Detener servicios
-docker-compose -f docker-compose.production.yml down
+docker-compose down
 
 # Ver estado
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
