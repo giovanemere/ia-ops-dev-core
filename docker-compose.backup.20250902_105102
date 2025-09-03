@@ -1,0 +1,43 @@
+services:
+  iaops-service-layer:
+    build:
+      context: .
+      dockerfile: Dockerfile.service-layer
+    container_name: iaops-service-layer
+    ports:
+    - ${IAOPS_SERVICE_LAYER_PORT:-8801}:8800
+    environment:
+    - POSTGRES_HOST=iaops-postgres-main
+    - POSTGRES_PORT=5432
+    - POSTGRES_DB=iaops_dev
+    - POSTGRES_USER=iaops_user
+    - POSTGRES_PASSWORD=iaops_password
+    - REDIS_HOST=iaops-redis-main
+    - REDIS_PORT=6379
+    - MINIO_ENDPOINT=ia-ops-minio-portal:9000
+    - MINIO_ACCESS_KEY=minioadmin
+    - MINIO_SECRET_KEY=minioadmin
+    - MINIO_BUCKET=ia-ops-dev-core
+    - DATABASE_URL=postgresql://iaops_user:iaops_password@iaops-postgres-main:5432/iaops_dev
+    - REDIS_URL=redis://iaops-redis-main:6379/0
+    networks:
+    - iaops-database-network
+    - iaops-shared-network
+    - ia-ops-minio-integrated
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8800/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+networks:
+  iaops-database-network:
+    external: true
+  iaops-shared-network:
+    external: true
+  ia-ops-minio-integrated:
+    external: true

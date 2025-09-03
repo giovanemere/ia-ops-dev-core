@@ -1,0 +1,109 @@
+version: '3.8'
+services:
+  iaops-service-layer:
+    build:
+      context: .
+      dockerfile: Dockerfile.service-layer
+    image: edissonz8809/iaops-service-layer:latest
+    container_name: iaops-service-layer
+    restart: unless-stopped
+    ports:
+    - 8800:8800
+    environment:
+    - POSTGRES_HOST=${POSTGRES_HOST:-iaops-postgres-main}
+    - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+    - POSTGRES_DB=${POSTGRES_DB:-postgres}
+    - POSTGRES_USER=${POSTGRES_USER:-postgres}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_admin_2024}
+    - DATABASE_URL=postgresql://iaops_user:iaops_password@iaops-postgres-main:5432/iaops_dev
+    - REDIS_HOST=${REDIS_HOST:-iaops-redis-main}
+    - REDIS_PORT=${REDIS_PORT:-6379}
+    - REDIS_URL=redis://iaops-redis-main:6379/0
+    - MINIO_ENDPOINT=${MINIO_ENDPOINT:-ia-ops-minio-portal:9000}
+    - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+    - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin123}
+    - MINIO_BUCKET=ia-ops-dev-core
+    - MINIO_SECURE=false
+    - SERVICE_PORT=8800
+    - SERVICE_HOST=0.0.0.0
+    - API_VERSION=v1
+    - PORTAL_URL=http://ia-ops-portal:8845
+    - VERITAS_URL=http://iaops-veritas:8869
+    volumes:
+    - ./logs:/app/logs
+    - ./data:/app/data
+    networks:
+    - iaops-shared-network
+    - iaops-database-network
+    - iaops-network
+    depends_on:
+    - postgres
+    - redis
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8800/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  postgres:
+    image: postgres:15-alpine
+    container_name: iaops-postgres-main
+    restart: unless-stopped
+    ports:
+    - ${POSTGRES_EXTERNAL_PORT:-5434}:5432
+    environment:
+    - POSTGRES_DB=${POSTGRES_DB:-postgres}
+    - POSTGRES_USER=${POSTGRES_USER:-postgres}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_admin_2024}
+    - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    volumes:
+    - postgres-data:/var/lib/postgresql/data
+    - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+    - iaops-database-network
+    - iaops-network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U iaops_user -d iaops_dev
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  redis:
+    image: redis:7-alpine
+    container_name: iaops-redis-main
+    restart: unless-stopped
+    ports:
+    - ${REDIS_EXTERNAL_PORT:-6380}:6379
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+    - redis-data:/data
+    networks:
+    - iaops-database-network
+    - iaops-network
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 30s
+      timeout: 10s
+      retries: 3
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+networks:
+  iaops-shared-network:
+    driver: bridge
+    name: iaops-shared-network
+  iaops-database-network:
+    driver: bridge
+    name: iaops-database-network
+  iaops-network:
+    name: iaops-network
+    external: true

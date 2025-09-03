@@ -12,20 +12,68 @@ from datetime import datetime
 import asyncio
 import logging
 import uvicorn
+import redis
+import psycopg2
+from minio import Minio
 
-# Import existing services
+# Import existing services with fallbacks
 try:
-    from provider_service_real import provider_service_real
-    from api.database_enhanced import get_db, Repository, Task, Build, Provider
+    from api.db_config import get_database_url, get_redis_url
+except ImportError:
+    def get_database_url():
+        return "postgresql://iaops_user:iaops_pass@localhost:5434/iaops_db"
+    def get_redis_url():
+        return "redis://localhost:6380"
+
+try:
     from api.github_service import GitHubService
-    from api.mkdocs_service import MkDocsService
-except ImportError as e:
-    print(f"Warning: Some services not available: {e}")
-    provider_service_real = None
+except ImportError:
+    GitHubService = None
+
+try:
+    from api.mkdocs_service import MkDocsService  
+except ImportError:
+    MkDocsService = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Database connection
+def get_db():
+    """Get database connection"""
+    try:
+        conn = psycopg2.connect(get_database_url())
+        return conn
+    except Exception as e:
+        logger.error(f"Database connection error: {e}")
+        return None
+
+# Redis connection
+def get_redis():
+    """Get Redis connection"""
+    try:
+        r = redis.from_url(get_redis_url())
+        r.ping()
+        return r
+    except Exception as e:
+        logger.error(f"Redis connection error: {e}")
+        return None
+
+# MinIO connection
+def get_minio():
+    """Get MinIO connection"""
+    try:
+        client = Minio(
+            "localhost:9898",
+            access_key="minioadmin",
+            secret_key="minioadmin",
+            secure=False
+        )
+        return client
+    except Exception as e:
+        logger.error(f"MinIO connection error: {e}")
+        return None
 
 # Create FastAPI app
 app = FastAPI(
@@ -140,8 +188,14 @@ class IAOpsServiceLayer:
     async def _check_database(self) -> Dict:
         """Check database connectivity"""
         try:
-            db = next(get_db())
-            db.execute("SELECT 1").fetchone()
+            db = get_db()
+            if db is None:
+                return {"healthy": False, "message": "Database connection failed"}
+            
+            cursor = db.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            cursor.close()
             db.close()
             return {"healthy": True, "message": "Database OK"}
         except Exception as e:
@@ -150,8 +204,10 @@ class IAOpsServiceLayer:
     async def _check_redis(self) -> Dict:
         """Check Redis connectivity"""
         try:
-            # Mock check - replace with actual Redis ping
-            await asyncio.sleep(0.1)
+            r = get_redis()
+            if r is None:
+                return {"healthy": False, "message": "Redis connection failed"}
+            r.ping()
             return {"healthy": True, "message": "Redis OK"}
         except Exception as e:
             return {"healthy": False, "message": f"Redis error: {str(e)}"}
@@ -159,8 +215,11 @@ class IAOpsServiceLayer:
     async def _check_minio(self) -> Dict:
         """Check MinIO connectivity"""
         try:
-            # Mock check - replace with actual MinIO health check
-            await asyncio.sleep(0.1)
+            client = get_minio()
+            if client is None:
+                return {"healthy": False, "message": "MinIO connection failed"}
+            # Try to list buckets as health check
+            list(client.list_buckets())
             return {"healthy": True, "message": "MinIO OK"}
         except Exception as e:
             return {"healthy": False, "message": f"MinIO error: {str(e)}"}
