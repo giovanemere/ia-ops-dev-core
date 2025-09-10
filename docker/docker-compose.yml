@@ -104,7 +104,7 @@ services:
   docs-backend:
     build:
       context: ..
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile.backend
     container_name: iaops-docs-backend
     ports:
       - "8846:8846"
@@ -113,7 +113,6 @@ services:
       - SERVICE_PORT=8846
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - GITHUB_USER=${GITHUB_USER:-}
-    command: uvicorn api.docs_backend:app --host 0.0.0.0 --port 8846
     networks:
       - iaops-network
     restart: unless-stopped
