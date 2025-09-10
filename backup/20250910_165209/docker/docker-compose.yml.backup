@@ -1,0 +1,161 @@
+version: '3.8'
+
+services:
+  repository-manager:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-repository-manager
+    ports:
+      - "8860:8000"
+    environment:
+      - SERVICE_NAME=repository_manager
+      - SERVICE_PORT=8000
+    command: uvicorn api.repository_manager:app --host 0.0.0.0 --port 8000
+    networks:
+      - iaops-network
+    restart: unless-stopped
+
+  task-manager:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-task-manager
+    ports:
+      - "8861:8000"
+    environment:
+      - SERVICE_NAME=task_manager
+      - SERVICE_PORT=8000
+    command: uvicorn api.task_manager:app --host 0.0.0.0 --port 8000
+    networks:
+      - iaops-network
+    restart: unless-stopped
+
+  log-manager:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-log-manager
+    ports:
+      - "8862:8000"
+    environment:
+      - SERVICE_NAME=log_manager
+      - SERVICE_PORT=8000
+    command: uvicorn api.log_manager:app --host 0.0.0.0 --port 8000
+    networks:
+      - iaops-network
+    restart: unless-stopped
+
+  datasync-manager:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-datasync-manager
+    ports:
+      - "8863:8000"
+    environment:
+      - SERVICE_NAME=datasync_manager
+      - SERVICE_PORT=8000
+    command: uvicorn api.datasync_manager:app --host 0.0.0.0 --port 8000
+    networks:
+      - iaops-network
+    restart: unless-stopped
+
+  github-runner-manager:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-github-runner-manager
+    ports:
+      - "8864:5000"
+    environment:
+      - SERVICE_NAME=github_runner_manager
+      - SERVICE_PORT=5000
+      - FLASK_APP=api.github_runner_manager
+      - FLASK_ENV=production
+    command: python -m flask run --host=0.0.0.0 --port=5000
+    networks:
+      - iaops-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  techdocs-builder:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-techdocs-builder
+    ports:
+      - "8865:5000"
+    environment:
+      - SERVICE_NAME=techdocs_builder_manager
+      - SERVICE_PORT=5000
+      - FLASK_APP=api.techdocs_builder_manager
+      - FLASK_ENV=production
+    command: python -m flask run --host=0.0.0.0 --port=5000
+    networks:
+      - iaops-network
+    restart: unless-stopped
+
+  docs-backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: iaops-docs-backend
+    ports:
+      - "8846:8846"
+    environment:
+      - SERVICE_NAME=docs_backend
+      - SERVICE_PORT=8846
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_USER=${GITHUB_USER:-}
+    networks:
+      - iaops-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8846/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  docs-frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-docs-frontend
+    ports:
+      - "8845:8845"
+    environment:
+      - SERVICE_NAME=docs_frontend
+      - SERVICE_PORT=8845
+      - BACKEND_URL=http://iaops-docs-backend:8846
+    command: uvicorn api.docs_frontend:app --host 0.0.0.0 --port 8845
+    volumes:
+      - static_data:/app/static
+      - templates_data:/app/templates
+    networks:
+      - iaops-network
+    restart: unless-stopped
+    depends_on:
+      - docs-backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8845/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  iaops-network:
+    external: true
+
+volumes:
+  docs_data:
+  static_data:
+  templates_data:
+  repos_data:
