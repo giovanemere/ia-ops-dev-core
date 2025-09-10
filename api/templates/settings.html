@@ -1,0 +1,1003 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración - IA-Ops Portal{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <h1><i class="fas fa-cog"></i> Configuración del Sistema</h1>
+                <p class="lead">Gestión de providers, integraciones y configuraciones del portal</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-light btn-lg" onclick="saveAllConfigurations()">
+                        <i class="fas fa-save"></i> Guardar Todo
+                    </button>
+                    <button class="btn btn-outline-light" onclick="testAllConnections()">
+                        <i class="fas fa-plug"></i> Test Conexiones
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Configuration Tabs -->
+    <ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="providers-tab" data-bs-toggle="tab" data-bs-target="#providers" type="button">
+                <i class="fas fa-plug"></i> Providers
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button">
+                <i class="fas fa-server"></i> Sistema
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button">
+                <i class="fas fa-bell"></i> Notificaciones
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button">
+                <i class="fas fa-tools"></i> Avanzado
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="configTabContent">
+        <!-- Providers Section -->
+        <div class="tab-pane fade show active" id="providers" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-plug"></i> Configuración de Providers</h5>
+                    <p class="mb-0 text-muted">Configura las integraciones con diferentes servicios y plataformas cloud</p>
+                </div>
+                <div class="card-body">
+                    <!-- Provider Sub-tabs -->
+                    <ul class="nav nav-pills mb-4" id="providerTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="github-subtab" data-bs-toggle="pill" data-bs-target="#github" type="button">
+                                <i class="fab fa-github"></i> GitHub
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="azure-subtab" data-bs-toggle="pill" data-bs-target="#azure" type="button">
+                                <i class="fab fa-microsoft"></i> Azure DevOps
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="aws-subtab" data-bs-toggle="pill" data-bs-target="#aws" type="button">
+                                <i class="fab fa-aws"></i> AWS
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="gcp-subtab" data-bs-toggle="pill" data-bs-target="#gcp" type="button">
+                                <i class="fab fa-google"></i> GCP
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="oci-subtab" data-bs-toggle="pill" data-bs-target="#oci" type="button">
+                                <i class="fas fa-cloud"></i> OCI
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Provider Sub-content -->
+                    <div class="tab-content" id="providerTabContent">
+                        <!-- GitHub Configuration -->
+                        <div class="tab-pane fade show active" id="github" role="tabpanel">
+                            <div class="card border-0">
+                                <div class="card-header bg-transparent">
+                                    <h6><i class="fab fa-github"></i> Configuración de GitHub</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="githubStatus" class="alert alert-info">
+                                        <i class="fas fa-spinner fa-spin"></i> Verificando estado de GitHub...
+                                    </div>
+                                    
+                                    <form id="githubForm">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="githubToken" class="form-label">Personal Access Token</label>
+                                                    <input type="password" class="form-control" id="githubToken" placeholder="ghp_...">
+                                                    <div class="form-text">
+                                                        <a href="https://github.com/settings/tokens" target="_blank">
+                                                            <i class="fas fa-external-link-alt"></i> Crear token en GitHub
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="githubUser" class="form-label">Usuario de GitHub</label>
+                                                    <input type="text" class="form-control" id="githubUser" placeholder="username">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-primary" onclick="saveGitHubConfig()">
+                                                <i class="fas fa-save"></i> Guardar
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary" onclick="testGitHubConnection()">
+                                                <i class="fas fa-plug"></i> Probar Conexión
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+        </div>
+
+                        <!-- Azure Configuration -->
+                        <div class="tab-pane fade" id="azure" role="tabpanel">
+                            <div class="card border-0">
+                                <div class="card-header bg-transparent">
+                                    <h6><i class="fab fa-microsoft"></i> Configuración de Azure DevOps</h6>
+                                </div>
+                <div class="card-body">
+                    <div id="azureStatus" class="alert alert-info">
+                        <i class="fas fa-spinner fa-spin"></i> Verificando estado de Azure...
+                    </div>
+                    
+                    <form id="azureForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="azureOrganization" class="form-label">Organización</label>
+                                    <input type="text" class="form-control" id="azureOrganization" placeholder="myorganization">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="azureProject" class="form-label">Proyecto (opcional)</label>
+                                    <input type="text" class="form-control" id="azureProject" placeholder="myproject">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="azureToken" class="form-label">Personal Access Token</label>
+                                    <input type="password" class="form-control" id="azureToken" placeholder="PAT token">
+                                    <div class="form-text">
+                                        <a href="https://dev.azure.com/_usersSettings/tokens" target="_blank">
+                                            <i class="fas fa-external-link-alt"></i> Crear token en Azure DevOps
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" onclick="saveAzureConfig()">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="testAzureConnection()">
+                                <i class="fas fa-plug"></i> Probar Conexión
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- AWS Configuration -->
+        <div class="tab-pane fade" id="aws" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fab fa-aws"></i> Configuración de AWS</h5>
+                </div>
+                <div class="card-body">
+                    <div id="awsStatus" class="alert alert-info">
+                        <i class="fas fa-spinner fa-spin"></i> Verificando estado de AWS...
+                    </div>
+                    
+                    <form id="awsForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="awsAccessKey" class="form-label">Access Key ID</label>
+                                    <input type="text" class="form-control" id="awsAccessKey" placeholder="AKIA...">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="awsSecretKey" class="form-label">Secret Access Key</label>
+                                    <input type="password" class="form-control" id="awsSecretKey" placeholder="Secret key">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="awsRegion" class="form-label">Región</label>
+                                    <select class="form-select" id="awsRegion">
+                                        <option value="us-east-1">US East (N. Virginia)</option>
+                                        <option value="us-west-2">US West (Oregon)</option>
+                                        <option value="eu-west-1">Europe (Ireland)</option>
+                                        <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="awsProfile" class="form-label">Profile (opcional)</label>
+                                    <input type="text" class="form-control" id="awsProfile" placeholder="default">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" onclick="saveAWSConfig()">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="testAWSConnection()">
+                                <i class="fas fa-plug"></i> Probar Conexión
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- GCP Configuration -->
+        <div class="tab-pane fade" id="gcp" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fab fa-google"></i> Configuración de Google Cloud Platform</h5>
+                </div>
+                <div class="card-body">
+                    <div id="gcpStatus" class="alert alert-info">
+                        <i class="fas fa-spinner fa-spin"></i> Verificando estado de GCP...
+                    </div>
+                    
+                    <form id="gcpForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="gcpProjectId" class="form-label">Project ID</label>
+                                    <input type="text" class="form-control" id="gcpProjectId" placeholder="my-project-id">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="gcpRegion" class="form-label">Región</label>
+                                    <select class="form-select" id="gcpRegion">
+                                        <option value="us-central1">us-central1</option>
+                                        <option value="us-east1">us-east1</option>
+                                        <option value="europe-west1">europe-west1</option>
+                                        <option value="asia-southeast1">asia-southeast1</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="gcpServiceAccount" class="form-label">Service Account Key (JSON)</label>
+                                    <textarea class="form-control" id="gcpServiceAccount" rows="4" placeholder='{"type": "service_account", ...}'></textarea>
+                                    <div class="form-text">
+                                        <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank">
+                                            <i class="fas fa-external-link-alt"></i> Crear Service Account
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" onclick="saveGCPConfig()">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="testGCPConnection()">
+                                <i class="fas fa-plug"></i> Probar Conexión
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- OCI Configuration -->
+        <div class="tab-pane fade" id="oci" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cloud"></i> Configuración de Oracle Cloud Infrastructure</h5>
+                </div>
+                <div class="card-body">
+                    <div id="ociStatus" class="alert alert-info">
+                        <i class="fas fa-spinner fa-spin"></i> Verificando estado de OCI...
+                    </div>
+                    
+                    <form id="ociForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="ociTenancyId" class="form-label">Tenancy OCID</label>
+                                    <input type="text" class="form-control" id="ociTenancyId" placeholder="ocid1.tenancy.oc1...">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ociUserId" class="form-label">User OCID</label>
+                                    <input type="text" class="form-control" id="ociUserId" placeholder="ocid1.user.oc1...">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ociFingerprint" class="form-label">Key Fingerprint</label>
+                                    <input type="text" class="form-control" id="ociFingerprint" placeholder="aa:bb:cc:dd...">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="ociRegion" class="form-label">Región</label>
+                                    <select class="form-select" id="ociRegion">
+                                        <option value="us-ashburn-1">US East (Ashburn)</option>
+                                        <option value="us-phoenix-1">US West (Phoenix)</option>
+                                        <option value="eu-frankfurt-1">Europe (Frankfurt)</option>
+                                        <option value="ap-tokyo-1">Asia Pacific (Tokyo)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="ociPrivateKey" class="form-label">Private Key</label>
+                                    <textarea class="form-control" id="ociPrivateKey" rows="4" placeholder="-----BEGIN PRIVATE KEY-----"></textarea>
+                                    <div class="form-text">
+                                        <a href="https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm" target="_blank">
+                                            <i class="fas fa-external-link-alt"></i> Generar API Key
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" onclick="saveOCIConfig()">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="testOCIConnection()">
+                                <i class="fas fa-plug"></i> Probar Conexión
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Configuration -->
+        <div class="tab-pane fade" id="system" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-database"></i> Base de Datos</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="dbStatus" class="mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    <span>Verificando conexión...</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Host</label>
+                                <input type="text" class="form-control" value="localhost:5434" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Base de Datos</label>
+                                <input type="text" class="form-control" value="postgres" readonly>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="testDatabaseConnection()">
+                                <i class="fas fa-plug"></i> Test Conexión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-memory"></i> Redis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="redisStatus" class="mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    <span>Verificando conexión...</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Host</label>
+                                <input type="text" class="form-control" value="localhost:6380" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Base de Datos</label>
+                                <input type="text" class="form-control" value="0" readonly>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="testRedisConnection()">
+                                <i class="fas fa-plug"></i> Test Conexión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-hdd"></i> MinIO Storage</h6>
+                </div>
+                <div class="card-body">
+                    <div id="minioStatus" class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            <span>Verificando conexión...</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Endpoint</label>
+                                <input type="text" class="form-control" value="localhost:9899" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Access Key</label>
+                                <input type="text" class="form-control" value="minioadmin" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Bucket Principal</label>
+                                <input type="text" class="form-control" value="iaops-portal" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="testMinIOConnection()">
+                        <i class="fas fa-plug"></i> Test Conexión
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Configuration -->
+        <div class="tab-pane fade" id="notifications" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-bell"></i> Configuración de Notificaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Notificaciones del Sistema</h6>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifyBuilds" checked>
+                                <label class="form-check-label" for="notifyBuilds">
+                                    Builds completados
+                                </label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifyErrors" checked>
+                                <label class="form-check-label" for="notifyErrors">
+                                    Errores del sistema
+                                </label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifySync" checked>
+                                <label class="form-check-label" for="notifySync">
+                                    Sincronizaciones
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Configuración de Duración</h6>
+                            <div class="mb-3">
+                                <label for="notificationDuration" class="form-label">Duración (segundos)</label>
+                                <input type="number" class="form-control" id="notificationDuration" value="5" min="1" max="30">
+                            </div>
+                            <div class="mb-3">
+                                <label for="notificationPosition" class="form-label">Posición</label>
+                                <select class="form-select" id="notificationPosition">
+                                    <option value="top-right" selected>Superior Derecha</option>
+                                    <option value="top-left">Superior Izquierda</option>
+                                    <option value="bottom-right">Inferior Derecha</option>
+                                    <option value="bottom-left">Inferior Izquierda</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="saveNotificationSettings()">
+                            <i class="fas fa-save"></i> Guardar
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="testNotification()">
+                            <i class="fas fa-bell"></i> Probar Notificación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Configuration -->
+        <div class="tab-pane fade" id="advanced" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tools"></i> Configuración Avanzada</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Configuración de API</h6>
+                            <div class="mb-3">
+                                <label for="apiTimeout" class="form-label">Timeout de API (segundos)</label>
+                                <input type="number" class="form-control" id="apiTimeout" value="30" min="5" max="300">
+                            </div>
+                            <div class="mb-3">
+                                <label for="maxRetries" class="form-label">Máximo de Reintentos</label>
+                                <input type="number" class="form-control" id="maxRetries" value="3" min="1" max="10">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Configuración de Tareas</h6>
+                            <div class="mb-3">
+                                <label for="taskTimeout" class="form-label">Timeout de Tareas (minutos)</label>
+                                <input type="number" class="form-control" id="taskTimeout" value="30" min="1" max="180">
+                            </div>
+                            <div class="mb-3">
+                                <label for="maxConcurrentTasks" class="form-label">Tareas Concurrentes</label>
+                                <input type="number" class="form-control" id="maxConcurrentTasks" value="5" min="1" max="20">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Atención:</strong> Los cambios en la configuración avanzada requieren reiniciar el sistema.
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="saveAdvancedSettings()">
+                            <i class="fas fa-save"></i> Guardar
+                        </button>
+                        <button class="btn btn-warning" onclick="resetToDefaults()">
+                            <i class="fas fa-undo"></i> Restaurar Defaults
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAllConfigurations();
+        checkSystemStatus();
+    });
+
+    async function loadAllConfigurations() {
+        await Promise.all([
+            loadGitHubConfig(),
+            loadAzureConfig(),
+            loadAWSConfig(),
+            loadGCPConfig(),
+            loadOCIConfig(),
+            loadNotificationSettings(),
+            loadAdvancedSettings()
+        ]);
+    }
+
+    async function loadGitHubConfig() {
+        try {
+            const data = await apiCall('/api/providers/github');
+            
+            if (data.success && data.config) {
+                document.getElementById('githubUser').value = data.config.user || '';
+                updateGitHubStatus(data.config.configured);
+            }
+        } catch (error) {
+            console.error('Error loading GitHub config:', error);
+        }
+    }
+
+    async function checkSystemStatus() {
+        try {
+            const data = await apiCall('/api/system/status');
+            
+            if (data.status === 'success') {
+                updateSystemStatus(data.services.external_services);
+            }
+        } catch (error) {
+            console.error('Error checking system status:', error);
+        }
+    }
+
+    function updateGitHubStatus(configured) {
+        const statusDiv = document.getElementById('githubStatus');
+        
+        if (configured) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> GitHub configurado correctamente';
+        } else {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> GitHub no configurado';
+        }
+    }
+
+    function updateSystemStatus(services) {
+        // Database status
+        const dbStatus = document.getElementById('dbStatus');
+        const dbHealthy = services.postgres === 'healthy';
+        dbStatus.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${dbHealthy ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} me-2"></i>
+                <span>${dbHealthy ? 'Conectado' : 'Desconectado'}</span>
+            </div>
+        `;
+
+        // Redis status
+        const redisStatus = document.getElementById('redisStatus');
+        const redisHealthy = services.redis === 'healthy';
+        redisStatus.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${redisHealthy ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} me-2"></i>
+                <span>${redisHealthy ? 'Conectado' : 'Desconectado'}</span>
+            </div>
+        `;
+
+        // MinIO status
+        const minioStatus = document.getElementById('minioStatus');
+        const minioHealthy = services.minio === 'healthy';
+        minioStatus.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${minioHealthy ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} me-2"></i>
+                <span>${minioHealthy ? 'Conectado' : 'Desconectado'}</span>
+            </div>
+        `;
+    }
+
+    async function saveGitHubConfig() {
+        const token = document.getElementById('githubToken').value;
+        const user = document.getElementById('githubUser').value;
+        
+        if (!token || !user) {
+            showError('Todos los campos son requeridos');
+            return;
+        }
+        
+        try {
+            const data = await apiCall('/api/providers/github', 'POST', {
+                github_token: token,
+                github_user: user
+            });
+            
+            if (data.success) {
+                showSuccess('GitHub configurado correctamente');
+                updateGitHubStatus(true);
+            } else {
+                showError(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function testGitHubConnection() {
+        try {
+            const data = await apiCall('/api/github/test', 'POST');
+            
+            if (data.success) {
+                showSuccess(`Conexión exitosa con GitHub (${data.user.login})`);
+            } else {
+                showError(`Error en conexión: ${data.error}`);
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function testDatabaseConnection() {
+        showInfo('Probando conexión a base de datos...');
+        await checkSystemStatus();
+    }
+
+    async function testRedisConnection() {
+        showInfo('Probando conexión a Redis...');
+        await checkSystemStatus();
+    }
+
+    async function testMinIOConnection() {
+        showInfo('Probando conexión a MinIO...');
+        await checkSystemStatus();
+    }
+
+    function loadNotificationSettings() {
+        // Cargar desde localStorage o defaults
+        const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+        
+        document.getElementById('notifyBuilds').checked = settings.notifyBuilds !== false;
+        document.getElementById('notifyErrors').checked = settings.notifyErrors !== false;
+        document.getElementById('notifySync').checked = settings.notifySync !== false;
+        document.getElementById('notificationDuration').value = settings.duration || 5;
+        document.getElementById('notificationPosition').value = settings.position || 'top-right';
+    }
+
+    function saveNotificationSettings() {
+        const settings = {
+            notifyBuilds: document.getElementById('notifyBuilds').checked,
+            notifyErrors: document.getElementById('notifyErrors').checked,
+            notifySync: document.getElementById('notifySync').checked,
+            duration: parseInt(document.getElementById('notificationDuration').value),
+            position: document.getElementById('notificationPosition').value
+        };
+        
+        localStorage.setItem('notificationSettings', JSON.stringify(settings));
+        showSuccess('Configuración de notificaciones guardada');
+    }
+
+    function loadAdvancedSettings() {
+        const settings = JSON.parse(localStorage.getItem('advancedSettings') || '{}');
+        
+        document.getElementById('apiTimeout').value = settings.apiTimeout || 30;
+        document.getElementById('maxRetries').value = settings.maxRetries || 3;
+        document.getElementById('taskTimeout').value = settings.taskTimeout || 30;
+        document.getElementById('maxConcurrentTasks').value = settings.maxConcurrentTasks || 5;
+    }
+
+    function saveAdvancedSettings() {
+        const settings = {
+            apiTimeout: parseInt(document.getElementById('apiTimeout').value),
+            maxRetries: parseInt(document.getElementById('maxRetries').value),
+            taskTimeout: parseInt(document.getElementById('taskTimeout').value),
+            maxConcurrentTasks: parseInt(document.getElementById('maxConcurrentTasks').value)
+        };
+        
+        localStorage.setItem('advancedSettings', JSON.stringify(settings));
+        showSuccess('Configuración avanzada guardada');
+    }
+
+    function resetToDefaults() {
+        if (confirm('¿Estás seguro de que quieres restaurar la configuración por defecto?')) {
+            localStorage.removeItem('advancedSettings');
+            loadAdvancedSettings();
+            showSuccess('Configuración restaurada a valores por defecto');
+        }
+    }
+
+    function testNotification() {
+        showSuccess('Esta es una notificación de prueba');
+    }
+
+    async function saveAllConfigurations() {
+        try {
+            saveNotificationSettings();
+            saveAdvancedSettings();
+            showSuccess('Todas las configuraciones guardadas');
+        } catch (error) {
+            showError('Error guardando configuraciones');
+        }
+    }
+
+    async function testAllConnections() {
+        showInfo('Probando todas las conexiones...');
+        await Promise.all([
+            testGitHubConnection(),
+            checkSystemStatus()
+        ]);
+        showSuccess('Pruebas de conexión completadas');
+    }
+
+    // ============================================================================
+    // CLOUD PROVIDERS FUNCTIONS
+    // ============================================================================
+
+    // Azure DevOps Functions
+    async function loadAzureConfig() {
+        try {
+            const data = await apiCall('/api/providers/azure-devops');
+            if (data.success && data.config) {
+                document.getElementById('azureOrganization').value = data.config.organization || '';
+                document.getElementById('azureProject').value = data.config.project || '';
+                updateAzureStatus(data.config.configured);
+            }
+        } catch (error) {
+            console.error('Error loading Azure config:', error);
+        }
+    }
+
+    function updateAzureStatus(configured) {
+        const statusDiv = document.getElementById('azureStatus');
+        if (configured) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Azure DevOps configurado correctamente';
+        } else {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Azure DevOps no configurado';
+        }
+    }
+
+    async function saveAzureConfig() {
+        const organization = document.getElementById('azureOrganization').value;
+        const project = document.getElementById('azureProject').value;
+        const token = document.getElementById('azureToken').value;
+        
+        if (!organization || !token) {
+            showError('Organización y token son requeridos');
+            return;
+        }
+        
+        try {
+            const data = await apiCall('/api/providers/azure-devops', 'POST', {
+                organization: organization,
+                project: project,
+                personal_access_token: token
+            });
+            
+            if (data.success) {
+                showSuccess('Azure DevOps configurado correctamente');
+                updateAzureStatus(true);
+            } else {
+                showError(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function testAzureConnection() {
+        try {
+            const data = await apiCall('/api/providers/azure-devops/test', 'POST');
+            if (data.success) {
+                showSuccess('Conexión exitosa con Azure DevOps');
+            } else {
+                showError(`Error en conexión: ${data.error}`);
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    // AWS Functions
+    async function loadAWSConfig() {
+        const config = JSON.parse(localStorage.getItem('awsConfig') || '{}');
+        document.getElementById('awsAccessKey').value = config.accessKey || '';
+        document.getElementById('awsRegion').value = config.region || 'us-east-1';
+        document.getElementById('awsProfile').value = config.profile || '';
+        updateAWSStatus(!!config.accessKey);
+    }
+
+    function updateAWSStatus(configured) {
+        const statusDiv = document.getElementById('awsStatus');
+        if (configured) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> AWS configurado correctamente';
+        } else {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> AWS no configurado';
+        }
+    }
+
+    function saveAWSConfig() {
+        const accessKey = document.getElementById('awsAccessKey').value;
+        const secretKey = document.getElementById('awsSecretKey').value;
+        const region = document.getElementById('awsRegion').value;
+        const profile = document.getElementById('awsProfile').value;
+        
+        if (!accessKey || !secretKey) {
+            showError('Access Key y Secret Key son requeridos');
+            return;
+        }
+        
+        const config = { accessKey, secretKey, region, profile };
+        localStorage.setItem('awsConfig', JSON.stringify(config));
+        updateAWSStatus(true);
+        showSuccess('AWS configurado correctamente');
+    }
+
+    function testAWSConnection() {
+        const config = JSON.parse(localStorage.getItem('awsConfig') || '{}');
+        if (config.accessKey) {
+            showSuccess('Configuración AWS válida (simulado)');
+        } else {
+            showError('AWS no configurado');
+        }
+    }
+
+    // GCP Functions
+    async function loadGCPConfig() {
+        const config = JSON.parse(localStorage.getItem('gcpConfig') || '{}');
+        document.getElementById('gcpProjectId').value = config.projectId || '';
+        document.getElementById('gcpRegion').value = config.region || 'us-central1';
+        document.getElementById('gcpServiceAccount').value = config.serviceAccount || '';
+        updateGCPStatus(!!config.projectId);
+    }
+
+    function updateGCPStatus(configured) {
+        const statusDiv = document.getElementById('gcpStatus');
+        if (configured) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> GCP configurado correctamente';
+        } else {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> GCP no configurado';
+        }
+    }
+
+    function saveGCPConfig() {
+        const projectId = document.getElementById('gcpProjectId').value;
+        const region = document.getElementById('gcpRegion').value;
+        const serviceAccount = document.getElementById('gcpServiceAccount').value;
+        
+        if (!projectId || !serviceAccount) {
+            showError('Project ID y Service Account son requeridos');
+            return;
+        }
+        
+        try {
+            JSON.parse(serviceAccount); // Validate JSON
+            const config = { projectId, region, serviceAccount };
+            localStorage.setItem('gcpConfig', JSON.stringify(config));
+            updateGCPStatus(true);
+            showSuccess('GCP configurado correctamente');
+        } catch (error) {
+            showError('Service Account debe ser un JSON válido');
+        }
+    }
+
+    function testGCPConnection() {
+        const config = JSON.parse(localStorage.getItem('gcpConfig') || '{}');
+        if (config.projectId) {
+            showSuccess('Configuración GCP válida (simulado)');
+        } else {
+            showError('GCP no configurado');
+        }
+    }
+
+    // OCI Functions
+    async function loadOCIConfig() {
+        const config = JSON.parse(localStorage.getItem('ociConfig') || '{}');
+        document.getElementById('ociTenancyId').value = config.tenancyId || '';
+        document.getElementById('ociUserId').value = config.userId || '';
+        document.getElementById('ociFingerprint').value = config.fingerprint || '';
+        document.getElementById('ociRegion').value = config.region || 'us-ashburn-1';
+        document.getElementById('ociPrivateKey').value = config.privateKey || '';
+        updateOCIStatus(!!config.tenancyId);
+    }
+
+    function updateOCIStatus(configured) {
+        const statusDiv = document.getElementById('ociStatus');
+        if (configured) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> OCI configurado correctamente';
+        } else {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> OCI no configurado';
+        }
+    }
+
+    function saveOCIConfig() {
+        const tenancyId = document.getElementById('ociTenancyId').value;
+        const userId = document.getElementById('ociUserId').value;
+        const fingerprint = document.getElementById('ociFingerprint').value;
+        const region = document.getElementById('ociRegion').value;
+        const privateKey = document.getElementById('ociPrivateKey').value;
+        
+        if (!tenancyId || !userId || !fingerprint || !privateKey) {
+            showError('Todos los campos son requeridos');
+            return;
+        }
+        
+        const config = { tenancyId, userId, fingerprint, region, privateKey };
+        localStorage.setItem('ociConfig', JSON.stringify(config));
+        updateOCIStatus(true);
+        showSuccess('OCI configurado correctamente');
+    }
+
+    function testOCIConnection() {
+        const config = JSON.parse(localStorage.getItem('ociConfig') || '{}');
+        if (config.tenancyId) {
+            showSuccess('Configuración OCI válida (simulado)');
+        } else {
+            showError('OCI no configurado');
+        }
+    }
+</script>
+{% endblock %}

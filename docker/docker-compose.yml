@@ -101,6 +101,62 @@ services:
       - iaops-network
     restart: unless-stopped
 
+  docs-backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-docs-backend
+    ports:
+      - "8846:8846"
+    environment:
+      - SERVICE_NAME=docs_backend
+      - SERVICE_PORT=8846
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_USER=${GITHUB_USER:-}
+    command: uvicorn api.docs_backend:app --host 0.0.0.0 --port 8846
+    networks:
+      - iaops-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8846/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  docs-frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: iaops-docs-frontend
+    ports:
+      - "8845:8845"
+    environment:
+      - SERVICE_NAME=docs_frontend
+      - SERVICE_PORT=8845
+      - BACKEND_URL=http://iaops-docs-backend:8846
+    command: uvicorn api.docs_frontend:app --host 0.0.0.0 --port 8845
+    volumes:
+      - static_data:/app/static
+      - templates_data:/app/templates
+    networks:
+      - iaops-network
+    restart: unless-stopped
+    depends_on:
+      - docs-backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8845/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
 networks:
   iaops-network:
     external: true
+
+volumes:
+  docs_data:
+  static_data:
+  templates_data:
+  repos_data:

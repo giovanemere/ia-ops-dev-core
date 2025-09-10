@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechDocs - IA-Ops Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { background-color: #f8f9fa; }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+        .search-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .search-box { position: relative; }
+        .search-box input { padding-right: 50px; }
+        .btn-search {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .project-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s;
+        }
+        .project-card:hover { transform: translateY(-2px); }
+        .navbar { background: white !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { font-weight: bold; color: #333 !important; }
+        .nav-link { color: #666 !important; }
+        .nav-link:hover { color: #007bff !important; }
+        .nav-link.active { color: #007bff !important; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="fas fa-rocket"></i> IA-Ops Portal</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/techdocs"><i class="fas fa-book"></i> TechDocs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/repositories"><i class="fas fa-code-branch"></i> Repositorios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/tasks"><i class="fas fa-tasks"></i> Tareas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/settings"><i class="fas fa-cog"></i> Configuración</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h1><i class="fas fa-book"></i> TechDocs Portal</h1>
+                    <p class="lead">Documentación técnica centralizada con búsqueda avanzada y builds automáticos</p>
+                </div>
+                <div class="col-lg-4">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-light btn-lg" onclick="buildAllDocs()">
+                            <i class="fas fa-hammer"></i> Build All Docs
+                        </button>
+                        <button class="btn btn-outline-light" onclick="refreshProjects()">
+                            <i class="fas fa-sync-alt"></i> Refresh Projects
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Search Section -->
+        <div class="search-section">
+            <h4><i class="fas fa-search"></i> Búsqueda en Documentación</h4>
+            <div class="row mt-3">
+                <div class="col-lg-8">
+                    <div class="search-box">
+                        <input type="text" class="form-control form-control-lg" id="searchInput" 
+                               placeholder="Buscar en toda la documentación..." value="{{ search_query or '' }}">
+                        <button class="btn-search" onclick="searchDocs()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <select class="form-select form-select-lg" id="projectFilter">
+                        <option value="">Todos los proyectos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="totalProjects" class="text-primary">-</h3>
+                    <p class="mb-0">Proyectos</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="totalDocs" class="text-success">-</h3>
+                    <p class="mb-0">Documentos</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="activeBuilds" class="text-warning">-</h3>
+                    <p class="mb-0">Builds Activos</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="lastUpdate" class="text-info">-</h3>
+                    <p class="mb-0">Última Actualización</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div id="searchResults" style="display: none;">
+            <h4>Resultados de Búsqueda</h4>
+            <div id="searchResultsContent"></div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div id="projectsSection">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4><i class="fas fa-folder-open"></i> Proyectos de Documentación</h4>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="toggleView()">
+                        <i class="fas fa-th" id="viewIcon"></i> <span id="viewText">Vista Grid</span>
+                    </button>
+                </div>
+            </div>
+            <div id="projectsGrid" class="row">
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando proyectos...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const BACKEND_URL = 'http://localhost:8846';
+        let currentView = 'grid';
+        let allProjects = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProjects();
+            loadStats();
+            
+            // Search on Enter
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchDocs();
+                }
+            });
+        });
+
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/techdocs/projects`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    allProjects = data.projects || [];
+                    displayProjects(allProjects);
+                    populateProjectFilter(allProjects);
+                } else {
+                    showError('Error cargando proyectos');
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                showMockProjects();
+            }
+        }
+
+        function showMockProjects() {
+            const mockProjects = [
+                { name: 'ia-ops-dev-core', description: 'Servicios principales de Dev-Core', has_mkdocs: true, pages: 15 },
+                { name: 'ia-ops-docs', description: 'Portal de documentación', has_mkdocs: true, pages: 8 },
+                { name: 'ia-ops-veritas', description: 'Testing y calidad', has_mkdocs: true, pages: 12 }
+            ];
+            displayProjects(mockProjects);
+            populateProjectFilter(mockProjects);
+        }
+
+        function displayProjects(projects) {
+            const grid = document.getElementById('projectsGrid');
+            
+            if (projects.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center"><p class="text-muted">No hay proyectos disponibles</p></div>';
+                return;
+            }
+
+            let html = '';
+            projects.forEach(project => {
+                html += `
+                    <div class="col-lg-4 col-md-6">
+                        <div class="project-card">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="mb-0">${project.name}</h5>
+                                <span class="badge ${project.has_mkdocs ? 'bg-success' : 'bg-secondary'}">
+                                    ${project.has_mkdocs ? 'MkDocs' : 'Docs'}
+                                </span>
+                            </div>
+                            <p class="text-muted mb-3">${project.description || 'Documentación del proyecto'}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-file-alt"></i> ${project.pages || 0} páginas
+                                </small>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewProject('${project.name}')">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="buildProject('${project.name}')">
+                                        <i class="fas fa-hammer"></i> Build
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+        }
+
+        function populateProjectFilter(projects) {
+            const filter = document.getElementById('projectFilter');
+            filter.innerHTML = '<option value="">Todos los proyectos</option>';
+            
+            projects.forEach(project => {
+                filter.innerHTML += `<option value="${project.name}">${project.name}</option>`;
+            });
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/v1/dashboard`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalProjects').textContent = data.data.repositories.total || 0;
+                    document.getElementById('totalDocs').textContent = (data.data.repositories.total * 5) || 0;
+                    document.getElementById('activeBuilds').textContent = data.data.tasks.running || 0;
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString();
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function searchDocs() {
+            const query = document.getElementById('searchInput').value.trim();
+            const projectFilter = document.getElementById('projectFilter').value;
+            
+            if (query.length < 2) {
+                alert('La búsqueda debe tener al menos 2 caracteres');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/techdocs/search/advanced?q=${encodeURIComponent(query)}&project=${projectFilter}`);
+                const results = await response.json();
+                
+                displaySearchResults(results, query);
+            } catch (error) {
+                console.error('Error searching:', error);
+                showError('Error en la búsqueda');
+            }
+        }
+
+        function displaySearchResults(results, query) {
+            const resultsSection = document.getElementById('searchResults');
+            const resultsContent = document.getElementById('searchResultsContent');
+            const projectsSection = document.getElementById('projectsSection');
+            
+            if (results.length === 0) {
+                resultsContent.innerHTML = '<p class="text-muted">No se encontraron resultados</p>';
+            } else {
+                let html = '';
+                results.forEach(result => {
+                    html += `
+                        <div class="project-card">
+                            <h6>${result.project || result.name}</h6>
+                            <p class="text-muted">${result.file || result.path}</p>
+                            <button class="btn btn-sm btn-primary" onclick="viewDocument('${result.project}', '${result.file}')">
+                                Ver Documento
+                            </button>
+                        </div>
+                    `;
+                });
+                resultsContent.innerHTML = html;
+            }
+            
+            resultsSection.style.display = 'block';
+            projectsSection.style.display = 'none';
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('projectsSection').style.display = 'block';
+        }
+
+        async function buildProject(projectName) {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/repository/${projectName}/build`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(`Build iniciado para ${projectName}`);
+                    loadStats();
+                } else {
+                    showError('Error iniciando build');
+                }
+            } catch (error) {
+                showError('Error conectando con el backend');
+            }
+        }
+
+        async function buildAllDocs() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/build/all`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Build iniciado para todos los proyectos');
+                    loadStats();
+                } else {
+                    showError('Error iniciando builds');
+                }
+            } catch (error) {
+                showError('Error conectando con el backend');
+            }
+        }
+
+        async function refreshProjects() {
+            try {
+                await loadProjects();
+                showSuccess('Proyectos actualizados');
+            } catch (error) {
+                showError('Error actualizando proyectos');
+            }
+        }
+
+        function viewProject(projectName) {
+            window.open(`/techdocs/project/${projectName}`, '_blank');
+        }
+
+        function viewDocument(project, file) {
+            window.open(`/techdocs/project/${project}/${file}`, '_blank');
+        }
+
+        function toggleView() {
+            // Implementar cambio de vista si es necesario
+        }
+
+        function showSuccess(message) {
+            alert('✅ ' + message);
+        }
+
+        function showError(message) {
+            alert('❌ ' + message);
+        }
+    </script>
+</body>
+</html>

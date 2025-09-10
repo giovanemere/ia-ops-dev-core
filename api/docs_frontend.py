@@ -1,0 +1,497 @@
+#!/usr/bin/env python3
+"""
+Docs Frontend - Frontend del portal que se conecta al backend en dev-core
+Mantiene todas las funcionalidades del portal original
+"""
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+import requests
+import logging
+from pathlib import Path
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="IA-Ops Docs Frontend", version="2.0.0")
+
+# Setup directories
+STATIC_DIR = Path("/app/static")
+TEMPLATES_DIR = Path("/app/templates")
+
+# Create directories
+for dir_path in [STATIC_DIR, TEMPLATES_DIR]:
+    dir_path.mkdir(parents=True, exist_ok=True)
+
+# Setup static files and templates
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+# Backend URL
+BACKEND_URL = "http://localhost:8846"
+
+class DocsFrontend:
+    def __init__(self):
+        self.setup_templates()
+        self.setup_static_files()
+    
+    def setup_templates(self):
+        """Setup HTML templates"""
+        dashboard_template = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA-Ops Portal - Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; }
+        
+        /* Header */
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+        .nav h1 { font-size: 1.8rem; font-weight: 300; }
+        .nav-links { display: flex; gap: 1.5rem; }
+        .nav-links a { color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 5px; transition: background 0.3s; }
+        .nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.2); }
+        
+        /* Main Content */
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 2rem; }
+        
+        /* Cards */
+        .card { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); }
+        .card h3 { color: #333; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .card p { color: #666; margin-bottom: 1.5rem; }
+        .card .btn { display: inline-block; padding: 0.75rem 1.5rem; background: #007bff; color: white; text-decoration: none; border-radius: 5px; transition: background 0.3s; }
+        .card .btn:hover { background: #0056b3; }
+        .card .btn.secondary { background: #6c757d; }
+        .card .btn.secondary:hover { background: #545b62; }
+        .card .btn.success { background: #28a745; }
+        .card .btn.success:hover { background: #1e7e34; }
+        .card .btn.warning { background: #ffc107; color: #212529; }
+        .card .btn.warning:hover { background: #e0a800; }
+        
+        /* Status indicators */
+        .status { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem; font-weight: bold; }
+        .status.healthy { background: #d4edda; color: #155724; }
+        .status.unhealthy { background: #f8d7da; color: #721c24; }
+        .status.unavailable { background: #fff3cd; color: #856404; }
+        
+        /* Quick Actions */
+        .quick-actions { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .quick-actions h3 { margin-bottom: 1rem; color: #333; }
+        .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .action-btn { display: block; padding: 1rem; text-align: center; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; text-decoration: none; color: #495057; transition: all 0.3s; }
+        .action-btn:hover { background: #e9ecef; transform: translateY(-1px); }
+        .action-btn i { display: block; font-size: 1.5rem; margin-bottom: 0.5rem; }
+        
+        /* System Status */
+        .system-status { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .status-item { padding: 1rem; background: #f8f9fa; border-radius: 8px; }
+        .status-item h4 { margin-bottom: 0.5rem; color: #333; }
+        
+        /* Loading and Error States */
+        .loading { text-align: center; padding: 2rem; color: #6c757d; }
+        .error { background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 5px; margin: 1rem 0; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav { flex-direction: column; gap: 1rem; }
+            .nav-links { flex-wrap: wrap; justify-content: center; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .actions-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <h1><i class="fas fa-rocket"></i> IA-Ops Portal</h1>
+            <div class="nav-links">
+                <a href="/" class="active"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/techdocs-v4"><i class="fas fa-book"></i> TechDocs</a>
+                <a href="/repositories-v4"><i class="fas fa-code-branch"></i> Repositorios</a>
+                <a href="/tasks-v4"><i class="fas fa-tasks"></i> Tareas</a>
+                <a href="/settings-v4"><i class="fas fa-cog"></i> Configuración</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3>
+            <div class="actions-grid">
+                <a href="#" class="action-btn" onclick="refreshRepositories()">
+                    <i class="fas fa-sync-alt"></i>
+                    Actualizar Repos
+                </a>
+                <a href="#" class="action-btn" onclick="buildAllRepositories()">
+                    <i class="fas fa-hammer"></i>
+                    Build All
+                </a>
+                <a href="#" class="action-btn" onclick="clearFailedTasks()">
+                    <i class="fas fa-trash-alt"></i>
+                    Limpiar Fallos
+                </a>
+                <a href="#" class="action-btn" onclick="testGitHubConnection()">
+                    <i class="fab fa-github"></i>
+                    Test GitHub
+                </a>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3><i class="fas fa-code-branch"></i> Repositorios</h3>
+                <p>Gestión de repositorios Git y sincronización automática</p>
+                <div id="repoStats" class="loading">Cargando...</div>
+                <a href="/repositories-v4" class="btn">Gestionar Repositorios</a>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-tasks"></i> Tareas</h3>
+                <p>Monitoreo de builds, deploys y procesos automáticos</p>
+                <div id="taskStats" class="loading">Cargando...</div>
+                <a href="/tasks-v4" class="btn secondary">Ver Tareas</a>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-book"></i> Documentación</h3>
+                <p>Portal TechDocs con búsqueda avanzada y builds automáticos</p>
+                <div id="docsStats" class="loading">Cargando...</div>
+                <a href="/techdocs-v4" class="btn success">Explorar Docs</a>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-chart-line"></i> Métricas</h3>
+                <p>Análisis de rendimiento y estadísticas del sistema</p>
+                <div id="metricsStats" class="loading">Cargando...</div>
+                <a href="/metrics-v4" class="btn warning">Ver Métricas</a>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="system-status">
+            <h3><i class="fas fa-heartbeat"></i> Estado del Sistema</h3>
+            <div class="status-grid" id="systemStatus">
+                <div class="loading">Cargando estado del sistema...</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8846';
+
+        // Load dashboard data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            loadSystemStatus();
+        });
+
+        async function loadDashboardData() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/v1/dashboard`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateDashboardStats(data.data);
+                } else {
+                    showError('Error cargando datos del dashboard');
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showError('Error conectando con el backend');
+            }
+        }
+
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/system/status`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    updateSystemStatus(data.services);
+                } else {
+                    showError('Error cargando estado del sistema');
+                }
+            } catch (error) {
+                console.error('Error loading system status:', error);
+                showError('Error conectando con el backend');
+            }
+        }
+
+        function updateDashboardStats(data) {
+            // Update repository stats
+            document.getElementById('repoStats').innerHTML = `
+                <p><strong>Total:</strong> ${data.repositories.total}</p>
+                <p><strong>Activos:</strong> ${data.repositories.active}</p>
+            `;
+
+            // Update task stats
+            document.getElementById('taskStats').innerHTML = `
+                <p><strong>Completadas:</strong> ${data.tasks.completed}</p>
+                <p><strong>En ejecución:</strong> ${data.tasks.running}</p>
+                <p><strong>Fallidas:</strong> ${data.tasks.failed}</p>
+            `;
+
+            // Update docs stats
+            document.getElementById('docsStats').innerHTML = `
+                <p><strong>Proyectos:</strong> ${data.repositories.total}</p>
+                <p><strong>Última actualización:</strong> ${new Date(data.repositories.last_updated).toLocaleDateString()}</p>
+            `;
+
+            // Update metrics stats
+            document.getElementById('metricsStats').innerHTML = `
+                <p><strong>CPU:</strong> ${data.system.cpu_usage}</p>
+                <p><strong>Memoria:</strong> ${data.system.memory_usage}</p>
+                <p><strong>Uptime:</strong> ${data.system.uptime}</p>
+            `;
+        }
+
+        function updateSystemStatus(services) {
+            const statusContainer = document.getElementById('systemStatus');
+            let html = '';
+
+            // Dev-Core Services
+            html += '<div class="status-item"><h4>Servicios Dev-Core</h4>';
+            for (const [service, status] of Object.entries(services.dev_core_services)) {
+                html += `<p>${service}: <span class="status ${status}">${status}</span></p>`;
+            }
+            html += '</div>';
+
+            // External Services
+            html += '<div class="status-item"><h4>Servicios Externos</h4>';
+            for (const [service, status] of Object.entries(services.external_services)) {
+                html += `<p>${service}: <span class="status ${status}">${status}</span></p>`;
+            }
+            html += '</div>';
+
+            statusContainer.innerHTML = html;
+        }
+
+        // Quick Actions
+        async function refreshRepositories() {
+            try {
+                showLoading('Actualizando repositorios...');
+                const response = await fetch(`${BACKEND_URL}/api/repositories/refresh`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess('Repositorios actualizados correctamente');
+                    loadDashboardData();
+                } else {
+                    showError('Error actualizando repositorios');
+                }
+            } catch (error) {
+                showError('Error conectando con el backend');
+            }
+        }
+
+        async function buildAllRepositories() {
+            try {
+                showLoading('Iniciando build de todos los repositorios...');
+                const response = await fetch(`${BACKEND_URL}/api/build/all`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(`Build iniciado para ${data.tasks.length} repositorios`);
+                    loadDashboardData();
+                } else {
+                    showError('Error iniciando builds');
+                }
+            } catch (error) {
+                showError('Error conectando con el backend');
+            }
+        }
+
+        async function clearFailedTasks() {
+            try {
+                showLoading('Limpiando tareas fallidas...');
+                const response = await fetch(`${BACKEND_URL}/api/tasks/failed/clear`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showSuccess(`${data.cleared_count} tareas fallidas eliminadas`);
+                    loadDashboardData();
+                } else {
+                    showError('Error limpiando tareas fallidas');
+                }
+            } catch (error) {
+                showError('Error conectando con el backend');
+            }
+        }
+
+        async function testGitHubConnection() {
+            try {
+                showLoading('Probando conexión con GitHub...');
+                const response = await fetch(`${BACKEND_URL}/api/github/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(`Conexión exitosa con GitHub (${data.user.login})`);
+                } else {
+                    showError(`Error en conexión GitHub: ${data.error}`);
+                }
+            } catch (error) {
+                showError('Error conectando con el backend');
+            }
+        }
+
+        // Utility functions
+        function showLoading(message) {
+            // Implement loading notification
+            console.log('Loading:', message);
+        }
+
+        function showSuccess(message) {
+            // Implement success notification
+            alert('✅ ' + message);
+        }
+
+        function showError(message) {
+            // Implement error notification
+            alert('❌ ' + message);
+        }
+    </script>
+</body>
+</html>
+        """
+        
+        template_path = TEMPLATES_DIR / "dashboard.html"
+        template_path.write_text(dashboard_template)
+    
+    def setup_static_files(self):
+        """Setup static files"""
+        css_content = """
+        /* Additional styles for enhanced UI */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification.success { background: #28a745; }
+        .notification.error { background: #dc3545; }
+        .notification.info { background: #17a2b8; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        """
+        
+        css_path = STATIC_DIR / "style.css"
+        css_path.write_text(css_content)
+
+# Initialize frontend
+frontend = DocsFrontend()
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "service": "docs-frontend",
+        "version": "2.0.0",
+        "backend_url": BACKEND_URL
+    }
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    """Dashboard principal"""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_redirect(request: Request):
+    """Redirect to main dashboard"""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/techdocs", response_class=HTMLResponse)
+async def techdocs(request: Request):
+    """TechDocs page"""
+    return templates.TemplateResponse("techdocs.html", {"request": request})
+
+@app.get("/techdocs-v4", response_class=HTMLResponse)
+async def techdocs_v4(request: Request):
+    """TechDocs v4 page"""
+    return templates.TemplateResponse("techdocs.html", {"request": request})
+
+@app.get("/repositories", response_class=HTMLResponse)
+async def repositories(request: Request):
+    """Repositories page"""
+    return templates.TemplateResponse("repositories.html", {"request": request})
+
+@app.get("/repositories-v4", response_class=HTMLResponse)
+async def repositories_v4(request: Request):
+    """Repositories v4 page"""
+    return templates.TemplateResponse("repositories.html", {"request": request})
+
+@app.get("/tasks", response_class=HTMLResponse)
+async def tasks(request: Request):
+    """Tasks page"""
+    return templates.TemplateResponse("tasks.html", {"request": request})
+
+@app.get("/tasks-v4", response_class=HTMLResponse)
+async def tasks_v4(request: Request):
+    """Tasks v4 page"""
+    return templates.TemplateResponse("tasks.html", {"request": request})
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings(request: Request):
+    """Settings page"""
+    return templates.TemplateResponse("settings.html", {"request": request})
+
+@app.get("/settings-v4", response_class=HTMLResponse)
+async def settings_v4(request: Request):
+    """Settings v4 page"""
+    return templates.TemplateResponse("settings.html", {"request": request})
+
+# Proxy endpoints to backend
+@app.get("/api/{path:path}")
+async def proxy_get(path: str, request: Request):
+    """Proxy GET requests to backend"""
+    try:
+        params = dict(request.query_params)
+        response = requests.get(f"{BACKEND_URL}/api/{path}", params=params, timeout=30)
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/{path:path}")
+async def proxy_post(path: str, request: Request):
+    """Proxy POST requests to backend"""
+    try:
+        body = await request.json() if request.headers.get("content-type") == "application/json" else {}
+        response = requests.post(f"{BACKEND_URL}/api/{path}", json=body, timeout=30)
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8845)

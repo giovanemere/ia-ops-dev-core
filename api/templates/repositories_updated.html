@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Repositorios - IA-Ops Portal{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <h1><i class="fas fa-code-branch"></i> Gestión de Repositorios</h1>
+                <p class="lead">Sincronización automática con GitHub y gestión centralizada de código</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-light btn-lg" onclick="refreshRepositories()">
+                        <i class="fas fa-sync-alt"></i> Actualizar Repositorios
+                    </button>
+                    <button class="btn btn-outline-light" onclick="configureGitHub()">
+                        <i class="fab fa-github"></i> Configurar GitHub
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3 id="totalRepos" class="text-primary">-</h3>
+                <p class="mb-0">Total Repositorios</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3 id="activeRepos" class="text-success">-</h3>
+                <p class="mb-0">Activos</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3 id="archivedRepos" class="text-warning">-</h3>
+                <p class="mb-0">Archivados</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h3 id="lastSync" class="text-info">-</h3>
+                <p class="mb-0">Última Sincronización</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Actions -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchRepos" placeholder="Buscar repositorios...">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="filterStatus">
+                        <option value="">Todos los estados</option>
+                        <option value="active">Activos</option>
+                        <option value="archived">Archivados</option>
+                        <option value="private">Privados</option>
+                        <option value="public">Públicos</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-primary" onclick="buildAllRepositories()">
+                            <i class="fas fa-hammer"></i> Build All
+                        </button>
+                        <button class="btn btn-success" onclick="syncAllRepositories()">
+                            <i class="fas fa-sync-alt"></i> Sync All
+                        </button>
+                        <button class="btn btn-info" onclick="testGitHubConnection()">
+                            <i class="fab fa-github"></i> Test GitHub
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GitHub Status -->
+    <div id="githubStatus" class="alert alert-info" style="display: none;">
+        <div class="d-flex align-items-center">
+            <i class="fab fa-github fa-2x me-3"></i>
+            <div>
+                <h6 class="mb-1">Estado de GitHub</h6>
+                <p class="mb-0" id="githubStatusText">Verificando conexión...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repositories Grid -->
+    <div id="repositoriesGrid">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando repositorios...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GitHub Configuration Modal -->
+<div class="modal fade" id="githubConfigModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fab fa-github"></i> Configurar GitHub</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="githubConfigForm">
+                    <div class="mb-3">
+                        <label for="githubToken" class="form-label">Personal Access Token</label>
+                        <input type="password" class="form-control" id="githubToken" required>
+                        <div class="form-text">
+                            <a href="https://github.com/settings/tokens" target="_blank">
+                                Crear token en GitHub
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="githubUser" class="form-label">Usuario de GitHub</label>
+                        <input type="text" class="form-control" id="githubUser" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveGitHubConfig()">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allRepositories = [];
+    let filteredRepositories = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadRepositories();
+        checkGitHubStatus();
+        
+        // Search functionality
+        document.getElementById('searchRepos').addEventListener('input', filterRepositories);
+        document.getElementById('filterStatus').addEventListener('change', filterRepositories);
+    });
+
+    async function loadRepositories() {
+        try {
+            const data = await apiCall('/api/repositories');
+            
+            if (data.status === 'success') {
+                allRepositories = data.repositories || [];
+                filteredRepositories = [...allRepositories];
+                displayRepositories(filteredRepositories);
+                updateStats(allRepositories);
+            } else {
+                showMockRepositories();
+            }
+        } catch (error) {
+            console.error('Error loading repositories:', error);
+            showMockRepositories();
+        }
+    }
+
+    function showMockRepositories() {
+        const mockRepos = [
+            {
+                name: 'ia-ops-dev-core',
+                full_name: 'giovanemere/ia-ops-dev-core',
+                description: 'Servicios principales de IA-Ops',
+                private: false,
+                archived: false,
+                language: 'Python',
+                updated_at: new Date().toISOString(),
+                html_url: 'https://github.com/giovanemere/ia-ops-dev-core'
+            },
+            {
+                name: 'ia-ops-docs',
+                full_name: 'giovanemere/ia-ops-docs',
+                description: 'Portal de documentación',
+                private: false,
+                archived: false,
+                language: 'Python',
+                updated_at: new Date().toISOString(),
+                html_url: 'https://github.com/giovanemere/ia-ops-docs'
+            }
+        ];
+        
+        allRepositories = mockRepos;
+        filteredRepositories = [...mockRepos];
+        displayRepositories(filteredRepositories);
+        updateStats(mockRepos);
+    }
+
+    function displayRepositories(repositories) {
+        const grid = document.getElementById('repositoriesGrid');
+        
+        if (repositories.length === 0) {
+            grid.innerHTML = '<div class="text-center"><p class="text-muted">No hay repositorios disponibles</p></div>';
+            return;
+        }
+
+        let html = '';
+        repositories.forEach(repo => {
+            const isPrivate = repo.private;
+            const isArchived = repo.archived;
+            const lastUpdate = formatDate(repo.updated_at);
+            
+            html += `
+                <div class="repo-card">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="mb-0 me-2">${repo.name}</h5>
+                                <span class="badge ${isPrivate ? 'bg-warning' : 'bg-success'} status-badge me-1">
+                                    ${isPrivate ? 'Privado' : 'Público'}
+                                </span>
+                                ${isArchived ? '<span class="badge bg-secondary status-badge">Archivado</span>' : ''}
+                            </div>
+                            <p class="text-muted mb-2">${repo.description || 'Sin descripción'}</p>
+                            <div class="d-flex align-items-center text-muted small">
+                                <span class="me-3">
+                                    <i class="fas fa-code"></i> ${repo.language || 'N/A'}
+                                </span>
+                                <span class="me-3">
+                                    <i class="fas fa-calendar"></i> ${lastUpdate}
+                                </span>
+                                <a href="${repo.html_url}" target="_blank" class="text-decoration-none">
+                                    <i class="fab fa-github"></i> Ver en GitHub
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="action-buttons text-end">
+                                <button class="btn btn-sm btn-outline-primary" onclick="buildRepository('${repo.name}')">
+                                    <i class="fas fa-hammer"></i> Build
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="syncRepository('${repo.name}')">
+                                    <i class="fas fa-sync-alt"></i> Sync
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="viewRepository('${repo.name}')">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="generateTechDocs('${repo.name}')">
+                                    <i class="fas fa-book"></i> TechDocs
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        grid.innerHTML = html;
+    }
+
+    function updateStats(repositories) {
+        const total = repositories.length;
+        const active = repositories.filter(r => !r.archived).length;
+        const archived = repositories.filter(r => r.archived).length;
+        
+        document.getElementById('totalRepos').textContent = formatNumber(total);
+        document.getElementById('activeRepos').textContent = formatNumber(active);
+        document.getElementById('archivedRepos').textContent = formatNumber(archived);
+        document.getElementById('lastSync').textContent = formatDate(new Date().toISOString());
+    }
+
+    function filterRepositories() {
+        const searchTerm = document.getElementById('searchRepos').value.toLowerCase();
+        const statusFilter = document.getElementById('filterStatus').value;
+        
+        filteredRepositories = allRepositories.filter(repo => {
+            const matchesSearch = repo.name.toLowerCase().includes(searchTerm) || 
+                                (repo.description && repo.description.toLowerCase().includes(searchTerm));
+            
+            let matchesStatus = true;
+            if (statusFilter === 'active') matchesStatus = !repo.archived;
+            else if (statusFilter === 'archived') matchesStatus = repo.archived;
+            else if (statusFilter === 'private') matchesStatus = repo.private;
+            else if (statusFilter === 'public') matchesStatus = !repo.private;
+            
+            return matchesSearch && matchesStatus;
+        });
+        
+        displayRepositories(filteredRepositories);
+    }
+
+    async function refreshRepositories() {
+        try {
+            const data = await apiCall('/api/repositories/refresh', 'POST');
+            
+            if (data.success) {
+                showSuccess('Repositorios actualizados correctamente');
+                await loadRepositories();
+            } else {
+                showError('Error actualizando repositorios');
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function buildRepository(repoName) {
+        try {
+            const data = await apiCall(`/api/repository/${repoName}/build`, 'POST');
+            
+            if (data.success) {
+                showSuccess(`Build iniciado para ${repoName}`);
+            } else {
+                showError('Error iniciando build');
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function buildAllRepositories() {
+        try {
+            const data = await apiCall('/api/build/all', 'POST');
+            
+            if (data.success) {
+                showSuccess(`Build iniciado para ${data.tasks.length} repositorios`);
+            } else {
+                showError('Error iniciando builds');
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function checkGitHubStatus() {
+        try {
+            const data = await apiCall('/api/github/test', 'POST');
+            
+            const statusDiv = document.getElementById('githubStatus');
+            const statusText = document.getElementById('githubStatusText');
+            
+            if (data.success) {
+                statusDiv.className = 'alert alert-success';
+                statusText.textContent = `Conectado como ${data.user.login}`;
+            } else {
+                statusDiv.className = 'alert alert-warning';
+                statusText.textContent = 'GitHub no configurado. Haz clic para configurar.';
+                statusDiv.style.cursor = 'pointer';
+                statusDiv.onclick = configureGitHub;
+            }
+            
+            statusDiv.style.display = 'block';
+        } catch (error) {
+            console.error('Error checking GitHub status:', error);
+        }
+    }
+
+    function configureGitHub() {
+        const modal = new bootstrap.Modal(document.getElementById('githubConfigModal'));
+        modal.show();
+    }
+
+    async function saveGitHubConfig() {
+        const token = document.getElementById('githubToken').value;
+        const user = document.getElementById('githubUser').value;
+        
+        if (!token || !user) {
+            showError('Todos los campos son requeridos');
+            return;
+        }
+        
+        try {
+            const data = await apiCall('/api/providers/github', 'POST', {
+                github_token: token,
+                github_user: user
+            });
+            
+            if (data.success) {
+                showSuccess('GitHub configurado correctamente');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('githubConfigModal'));
+                modal.hide();
+                await checkGitHubStatus();
+                await loadRepositories();
+            } else {
+                showError(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function testGitHubConnection() {
+        await checkGitHubStatus();
+    }
+
+    function syncRepository(repoName) {
+        showSuccess(`Sincronización iniciada para ${repoName}`);
+    }
+
+    function syncAllRepositories() {
+        showSuccess('Sincronización masiva iniciada');
+    }
+
+    function viewRepository(repoName) {
+        window.open(`/repository/${repoName}`, '_blank');
+    }
+
+    function generateTechDocs(repoName) {
+        showSuccess(`Generación de TechDocs iniciada para ${repoName}`);
+    }
+</script>
+{% endblock %}

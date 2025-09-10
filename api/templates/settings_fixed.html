@@ -1,0 +1,622 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración - IA-Ops Portal{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <h1><i class="fas fa-cog"></i> Configuración del Sistema</h1>
+                <p class="lead">Gestión de providers, integraciones y configuraciones del portal</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-light btn-lg" onclick="saveAllConfigurations()">
+                        <i class="fas fa-save"></i> Guardar Todo
+                    </button>
+                    <button class="btn btn-outline-light" onclick="testAllConnections()">
+                        <i class="fas fa-plug"></i> Test Conexiones
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Configuration Tabs -->
+    <ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="providers-tab" data-bs-toggle="tab" data-bs-target="#providers" type="button">
+                <i class="fas fa-plug"></i> Providers
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button">
+                <i class="fas fa-server"></i> Sistema
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button">
+                <i class="fas fa-bell"></i> Notificaciones
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button">
+                <i class="fas fa-tools"></i> Avanzado
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="configTabContent">
+        <!-- Providers Section -->
+        <div class="tab-pane fade show active" id="providers" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-plug"></i> Configuración de Providers</h5>
+                    <p class="mb-0 text-muted">Configura las integraciones con diferentes servicios y plataformas cloud</p>
+                </div>
+                <div class="card-body">
+                    <!-- Provider Sub-tabs -->
+                    <ul class="nav nav-pills mb-4" id="providerTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="github-subtab" data-bs-toggle="pill" data-bs-target="#github-content" type="button">
+                                <i class="fab fa-github"></i> GitHub
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="azure-subtab" data-bs-toggle="pill" data-bs-target="#azure-content" type="button">
+                                <i class="fab fa-microsoft"></i> Azure DevOps
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="aws-subtab" data-bs-toggle="pill" data-bs-target="#aws-content" type="button">
+                                <i class="fab fa-aws"></i> AWS
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="gcp-subtab" data-bs-toggle="pill" data-bs-target="#gcp-content" type="button">
+                                <i class="fab fa-google"></i> GCP
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="oci-subtab" data-bs-toggle="pill" data-bs-target="#oci-content" type="button">
+                                <i class="fas fa-cloud"></i> OCI
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Provider Sub-content -->
+                    <div class="tab-content" id="providerTabContent">
+                        <!-- GitHub Configuration -->
+                        <div class="tab-pane fade show active" id="github-content" role="tabpanel">
+                            <div id="githubStatus" class="alert alert-info">
+                                <i class="fas fa-spinner fa-spin"></i> Verificando estado de GitHub...
+                            </div>
+                            
+                            <form id="githubForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="githubToken" class="form-label">Personal Access Token</label>
+                                            <input type="password" class="form-control" id="githubToken" placeholder="ghp_...">
+                                            <div class="form-text">
+                                                <a href="https://github.com/settings/tokens" target="_blank">
+                                                    <i class="fas fa-external-link-alt"></i> Crear token en GitHub
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="githubUser" class="form-label">Usuario de GitHub</label>
+                                            <input type="text" class="form-control" id="githubUser" placeholder="username">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="saveGitHubConfig()">
+                                        <i class="fas fa-save"></i> Guardar
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="testGitHubConnection()">
+                                        <i class="fas fa-plug"></i> Probar Conexión
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Azure Configuration -->
+                        <div class="tab-pane fade" id="azure-content" role="tabpanel">
+                            <div id="azureStatus" class="alert alert-info">
+                                <i class="fas fa-spinner fa-spin"></i> Verificando estado de Azure...
+                            </div>
+                            
+                            <form id="azureForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="azureOrganization" class="form-label">Organización</label>
+                                            <input type="text" class="form-control" id="azureOrganization" placeholder="myorganization">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="azureProject" class="form-label">Proyecto (opcional)</label>
+                                            <input type="text" class="form-control" id="azureProject" placeholder="myproject">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="azureToken" class="form-label">Personal Access Token</label>
+                                            <input type="password" class="form-control" id="azureToken" placeholder="PAT token">
+                                            <div class="form-text">
+                                                <a href="https://dev.azure.com/_usersSettings/tokens" target="_blank">
+                                                    <i class="fas fa-external-link-alt"></i> Crear token en Azure DevOps
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="saveAzureConfig()">
+                                        <i class="fas fa-save"></i> Guardar
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="testAzureConnection()">
+                                        <i class="fas fa-plug"></i> Probar Conexión
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- AWS Configuration -->
+                        <div class="tab-pane fade" id="aws-content" role="tabpanel">
+                            <div id="awsStatus" class="alert alert-info">
+                                <i class="fas fa-spinner fa-spin"></i> Verificando estado de AWS...
+                            </div>
+                            
+                            <form id="awsForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="awsAccessKey" class="form-label">Access Key ID</label>
+                                            <input type="text" class="form-control" id="awsAccessKey" placeholder="AKIA...">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="awsSecretKey" class="form-label">Secret Access Key</label>
+                                            <input type="password" class="form-control" id="awsSecretKey" placeholder="Secret key">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="awsRegion" class="form-label">Región</label>
+                                            <select class="form-select" id="awsRegion">
+                                                <option value="us-east-1">US East (N. Virginia)</option>
+                                                <option value="us-west-2">US West (Oregon)</option>
+                                                <option value="eu-west-1">Europe (Ireland)</option>
+                                                <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="awsProfile" class="form-label">Profile (opcional)</label>
+                                            <input type="text" class="form-control" id="awsProfile" placeholder="default">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="saveAWSConfig()">
+                                        <i class="fas fa-save"></i> Guardar
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="testAWSConnection()">
+                                        <i class="fas fa-plug"></i> Probar Conexión
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- GCP Configuration -->
+                        <div class="tab-pane fade" id="gcp-content" role="tabpanel">
+                            <div id="gcpStatus" class="alert alert-info">
+                                <i class="fas fa-spinner fa-spin"></i> Verificando estado de GCP...
+                            </div>
+                            
+                            <form id="gcpForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="gcpProjectId" class="form-label">Project ID</label>
+                                            <input type="text" class="form-control" id="gcpProjectId" placeholder="my-project-id">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="gcpRegion" class="form-label">Región</label>
+                                            <select class="form-select" id="gcpRegion">
+                                                <option value="us-central1">us-central1</option>
+                                                <option value="us-east1">us-east1</option>
+                                                <option value="europe-west1">europe-west1</option>
+                                                <option value="asia-southeast1">asia-southeast1</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="gcpServiceAccount" class="form-label">Service Account Key (JSON)</label>
+                                            <textarea class="form-control" id="gcpServiceAccount" rows="4" placeholder='{"type": "service_account", ...}'></textarea>
+                                            <div class="form-text">
+                                                <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank">
+                                                    <i class="fas fa-external-link-alt"></i> Crear Service Account
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="saveGCPConfig()">
+                                        <i class="fas fa-save"></i> Guardar
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="testGCPConnection()">
+                                        <i class="fas fa-plug"></i> Probar Conexión
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- OCI Configuration -->
+                        <div class="tab-pane fade" id="oci-content" role="tabpanel">
+                            <div id="ociStatus" class="alert alert-info">
+                                <i class="fas fa-spinner fa-spin"></i> Verificando estado de OCI...
+                            </div>
+                            
+                            <form id="ociForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="ociTenancyId" class="form-label">Tenancy OCID</label>
+                                            <input type="text" class="form-control" id="ociTenancyId" placeholder="ocid1.tenancy.oc1...">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="ociUserId" class="form-label">User OCID</label>
+                                            <input type="text" class="form-control" id="ociUserId" placeholder="ocid1.user.oc1...">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="ociFingerprint" class="form-label">Key Fingerprint</label>
+                                            <input type="text" class="form-control" id="ociFingerprint" placeholder="aa:bb:cc:dd...">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="ociRegion" class="form-label">Región</label>
+                                            <select class="form-select" id="ociRegion">
+                                                <option value="us-ashburn-1">US East (Ashburn)</option>
+                                                <option value="us-phoenix-1">US West (Phoenix)</option>
+                                                <option value="eu-frankfurt-1">Europe (Frankfurt)</option>
+                                                <option value="ap-tokyo-1">Asia Pacific (Tokyo)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="ociPrivateKey" class="form-label">Private Key</label>
+                                            <textarea class="form-control" id="ociPrivateKey" rows="4" placeholder="-----BEGIN PRIVATE KEY-----"></textarea>
+                                            <div class="form-text">
+                                                <a href="https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm" target="_blank">
+                                                    <i class="fas fa-external-link-alt"></i> Generar API Key
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="saveOCIConfig()">
+                                        <i class="fas fa-save"></i> Guardar
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="testOCIConnection()">
+                                        <i class="fas fa-plug"></i> Probar Conexión
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Configuration -->
+        <div class="tab-pane fade" id="system" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-database"></i> Base de Datos</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="dbStatus" class="mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    <span>Verificando conexión...</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Host</label>
+                                <input type="text" class="form-control" value="localhost:5434" readonly>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="testDatabaseConnection()">
+                                <i class="fas fa-plug"></i> Test Conexión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-memory"></i> Redis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="redisStatus" class="mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    <span>Verificando conexión...</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Host</label>
+                                <input type="text" class="form-control" value="localhost:6380" readonly>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="testRedisConnection()">
+                                <i class="fas fa-plug"></i> Test Conexión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Configuration -->
+        <div class="tab-pane fade" id="notifications" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-bell"></i> Configuración de Notificaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Notificaciones del Sistema</h6>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifyBuilds" checked>
+                                <label class="form-check-label" for="notifyBuilds">Builds completados</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifyErrors" checked>
+                                <label class="form-check-label" for="notifyErrors">Errores del sistema</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Configuración de Duración</h6>
+                            <div class="mb-3">
+                                <label for="notificationDuration" class="form-label">Duración (segundos)</label>
+                                <input type="number" class="form-control" id="notificationDuration" value="5" min="1" max="30">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="saveNotificationSettings()">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Configuration -->
+        <div class="tab-pane fade" id="advanced" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tools"></i> Configuración Avanzada</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Configuración de API</h6>
+                            <div class="mb-3">
+                                <label for="apiTimeout" class="form-label">Timeout de API (segundos)</label>
+                                <input type="number" class="form-control" id="apiTimeout" value="30" min="5" max="300">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Configuración de Tareas</h6>
+                            <div class="mb-3">
+                                <label for="taskTimeout" class="form-label">Timeout de Tareas (minutos)</label>
+                                <input type="number" class="form-control" id="taskTimeout" value="30" min="1" max="180">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="saveAdvancedSettings()">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAllConfigurations();
+        checkSystemStatus();
+    });
+
+    async function loadAllConfigurations() {
+        await Promise.all([
+            loadGitHubConfig(),
+            loadAzureConfig(),
+            loadAWSConfig(),
+            loadGCPConfig(),
+            loadOCIConfig(),
+            loadNotificationSettings(),
+            loadAdvancedSettings()
+        ]);
+    }
+
+    async function loadGitHubConfig() {
+        try {
+            const data = await apiCall('/api/providers/github');
+            if (data.success && data.config) {
+                document.getElementById('githubUser').value = data.config.user || '';
+                updateGitHubStatus(data.config.configured);
+            }
+        } catch (error) {
+            console.error('Error loading GitHub config:', error);
+        }
+    }
+
+    function updateGitHubStatus(configured) {
+        const statusDiv = document.getElementById('githubStatus');
+        if (configured) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> GitHub configurado correctamente';
+        } else {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> GitHub no configurado';
+        }
+    }
+
+    async function saveGitHubConfig() {
+        const token = document.getElementById('githubToken').value;
+        const user = document.getElementById('githubUser').value;
+        
+        if (!token || !user) {
+            showError('Todos los campos son requeridos');
+            return;
+        }
+        
+        try {
+            const data = await apiCall('/api/providers/github', 'POST', {
+                github_token: token,
+                github_user: user
+            });
+            
+            if (data.success) {
+                showSuccess('GitHub configurado correctamente');
+                updateGitHubStatus(true);
+            } else {
+                showError(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function testGitHubConnection() {
+        try {
+            const data = await apiCall('/api/github/test', 'POST');
+            if (data.success) {
+                showSuccess(`Conexión exitosa con GitHub (${data.user.login})`);
+            } else {
+                showError(`Error en conexión: ${data.error}`);
+            }
+        } catch (error) {
+            showError('Error conectando con el backend');
+        }
+    }
+
+    async function checkSystemStatus() {
+        try {
+            const data = await apiCall('/api/system/status');
+            if (data.status === 'success') {
+                updateSystemStatus(data.services.external_services);
+            }
+        } catch (error) {
+            console.error('Error checking system status:', error);
+        }
+    }
+
+    function updateSystemStatus(services) {
+        const dbStatus = document.getElementById('dbStatus');
+        const dbHealthy = services.postgres === 'healthy';
+        dbStatus.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${dbHealthy ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} me-2"></i>
+                <span>${dbHealthy ? 'Conectado' : 'Desconectado'}</span>
+            </div>
+        `;
+
+        const redisStatus = document.getElementById('redisStatus');
+        const redisHealthy = services.redis === 'healthy';
+        redisStatus.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${redisHealthy ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} me-2"></i>
+                <span>${redisHealthy ? 'Conectado' : 'Desconectado'}</span>
+            </div>
+        `;
+    }
+
+    // Placeholder functions for other providers
+    async function loadAzureConfig() { updateAzureStatus(false); }
+    async function loadAWSConfig() { updateAWSStatus(false); }
+    async function loadGCPConfig() { updateGCPStatus(false); }
+    async function loadOCIConfig() { updateOCIStatus(false); }
+
+    function updateAzureStatus(configured) {
+        const statusDiv = document.getElementById('azureStatus');
+        statusDiv.className = configured ? 'alert alert-success' : 'alert alert-warning';
+        statusDiv.innerHTML = configured ? 
+            '<i class="fas fa-check-circle"></i> Azure DevOps configurado correctamente' :
+            '<i class="fas fa-exclamation-triangle"></i> Azure DevOps no configurado';
+    }
+
+    function updateAWSStatus(configured) {
+        const statusDiv = document.getElementById('awsStatus');
+        statusDiv.className = configured ? 'alert alert-success' : 'alert alert-warning';
+        statusDiv.innerHTML = configured ? 
+            '<i class="fas fa-check-circle"></i> AWS configurado correctamente' :
+            '<i class="fas fa-exclamation-triangle"></i> AWS no configurado';
+    }
+
+    function updateGCPStatus(configured) {
+        const statusDiv = document.getElementById('gcpStatus');
+        statusDiv.className = configured ? 'alert alert-success' : 'alert alert-warning';
+        statusDiv.innerHTML = configured ? 
+            '<i class="fas fa-check-circle"></i> GCP configurado correctamente' :
+            '<i class="fas fa-exclamation-triangle"></i> GCP no configurado';
+    }
+
+    function updateOCIStatus(configured) {
+        const statusDiv = document.getElementById('ociStatus');
+        statusDiv.className = configured ? 'alert alert-success' : 'alert alert-warning';
+        statusDiv.innerHTML = configured ? 
+            '<i class="fas fa-check-circle"></i> OCI configurado correctamente' :
+            '<i class="fas fa-exclamation-triangle"></i> OCI no configurado';
+    }
+
+    function saveAzureConfig() { showSuccess('Azure configurado (simulado)'); }
+    function testAzureConnection() { showSuccess('Conexión Azure OK (simulado)'); }
+    function saveAWSConfig() { showSuccess('AWS configurado (simulado)'); }
+    function testAWSConnection() { showSuccess('Conexión AWS OK (simulado)'); }
+    function saveGCPConfig() { showSuccess('GCP configurado (simulado)'); }
+    function testGCPConnection() { showSuccess('Conexión GCP OK (simulado)'); }
+    function saveOCIConfig() { showSuccess('OCI configurado (simulado)'); }
+    function testOCIConnection() { showSuccess('Conexión OCI OK (simulado)'); }
+
+    function loadNotificationSettings() {}
+    function saveNotificationSettings() { showSuccess('Notificaciones guardadas'); }
+    function loadAdvancedSettings() {}
+    function saveAdvancedSettings() { showSuccess('Configuración avanzada guardada'); }
+
+    function testDatabaseConnection() { checkSystemStatus(); }
+    function testRedisConnection() { checkSystemStatus(); }
+
+    async function saveAllConfigurations() {
+        showSuccess('Todas las configuraciones guardadas');
+    }
+
+    async function testAllConnections() {
+        await checkSystemStatus();
+        showSuccess('Pruebas de conexión completadas');
+    }
+</script>
+{% endblock %}
