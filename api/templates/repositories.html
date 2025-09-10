@@ -517,6 +517,87 @@
         function showError(message) {
             alert('❌ ' + message);
         }
+
+        // ============================================================================
+        // GITHUB INTEGRATION (usando configuración centralizada)
+        // ============================================================================
+
+        async function loadUserRepositories() {
+            try {
+                showInfo('Cargando repositorios desde GitHub...');
+                
+                // Usar la API del backend que ya tiene la configuración
+                const data = await apiCall('/api/github/repositories');
+                
+                if (data.success && data.repositories) {
+                    // Actualizar la lista de repositorios
+                    allRepositories = data.repositories.map(repo => ({
+                        id: repo.id,
+                        name: repo.name,
+                        full_name: repo.full_name,
+                        description: repo.description || 'Sin descripción',
+                        language: repo.language || 'N/A',
+                        stars: repo.stargazers_count || 0,
+                        forks: repo.forks_count || 0,
+                        updated_at: repo.updated_at,
+                        html_url: repo.html_url,
+                        private: repo.private
+                    }));
+                    
+                    filteredRepositories = [...allRepositories];
+                    displayRepositories();
+                    updateStats();
+                    
+                    showSuccess(`${data.repositories.length} repositorios cargados desde GitHub`);
+                } else {
+                    showError(data.error || 'Error cargando repositorios desde GitHub');
+                }
+            } catch (error) {
+                showError('Error conectando con el backend. Configura GitHub en Settings primero.');
+            }
+        }
+
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const token = localStorage.getItem('authToken');
+            
+            const config = {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            if (data && method !== 'GET') {
+                config.body = JSON.stringify(data);
+            }
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}${endpoint}`, config);
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+
+        // Agregar botón para cargar desde GitHub
+        function addGitHubLoadButton() {
+            const container = document.querySelector('.card-header .d-flex');
+            if (container && !document.getElementById('loadFromGitHub')) {
+                const button = document.createElement('button');
+                button.id = 'loadFromGitHub';
+                button.className = 'btn btn-outline-success btn-sm me-2';
+                button.innerHTML = '<i class="fab fa-github"></i> Cargar desde GitHub';
+                button.onclick = loadUserRepositories;
+                container.insertBefore(button, container.firstChild);
+            }
+        }
+
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            addGitHubLoadButton();
+        });
     </script>
 </body>
 </html>
