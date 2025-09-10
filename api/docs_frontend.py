@@ -31,7 +31,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Backend URL
-BACKEND_URL = "http://localhost:8846"
+BACKEND_URL = "http://iaops-docs-backend:8846"
 
 class DocsFrontend:
     def __init__(self):

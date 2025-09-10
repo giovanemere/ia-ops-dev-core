@@ -417,3 +417,26 @@ async def test_redis():
 @app.get("/api/test/minio")
 async def test_minio():
     return {"status": "success", "message": "MinIO OK", "endpoint": "localhost:9898"}
+
+@app.get("/api/v1/dashboard")
+async def get_dashboard_v1():
+    return {
+        "status": "success",
+        "data": {
+            "services": {
+                "backend": {"status": "running", "port": 8846},
+                "frontend": {"status": "running", "port": 8845},
+                "database": {"status": "connected", "type": "postgresql"},
+                "redis": {"status": "connected", "type": "redis"},
+                "minio": {"status": "available", "type": "storage"}
+            },
+            "stats": {
+                "uptime": "running",
+                "requests": 0,
+                "users": 1,
+                "projects": 2
+            },
+            "version": "v3.0.0"
+        },
+        "success": true
+    }
