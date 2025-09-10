@@ -495,7 +495,3 @@ async def proxy_post(path: str, request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8845)
-
-@app.route("/minio")
-def minio():
-    return render_template("minio.html")
