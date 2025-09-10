@@ -102,9 +102,10 @@ services:
     restart: unless-stopped
 
   docs-backend:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.backend
+    image: iaops/docs-backend:latest
+    # build:
+      # context: ..
+      # dockerfile: docker/Dockerfile.backend
     container_name: iaops-docs-backend
     ports:
       - "8846:8846"
@@ -124,9 +125,10 @@ services:
       start_period: 40s
 
   docs-frontend:
-    build:
-      context: ..
-      dockerfile: Dockerfile
+    image: iaops/docs-frontend:latest
+    # build:
+      # context: ..
+      # dockerfile: Dockerfile
     container_name: iaops-docs-frontend
     ports:
       - "8845:8845"
