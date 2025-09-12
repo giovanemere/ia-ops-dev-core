@@ -158,7 +158,7 @@
 
         async function loadDashboardData() {
             try {
-                const response = await fetch(`${BACKEND_URL}/api/system/status`);
+                const response = await fetch(`${BACKEND_URL}/api/v1/dashboard`);
                 const data = await response.json();
                 
                 if (data.success) {

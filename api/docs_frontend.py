@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="IA-Ops Docs Frontend", version="2.0.0")
 
 # Setup directories
-STATIC_DIR = Path("/app/static")
-TEMPLATES_DIR = Path("/app/templates")
+STATIC_DIR = Path("./static")
+TEMPLATES_DIR = Path("./templates")
 
 # Create directories
 for dir_path in [STATIC_DIR, TEMPLATES_DIR]:
